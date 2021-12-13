@@ -171,6 +171,12 @@ The response should now be:
 }
 ```
 
+### Password encryption
+Password encryption is isolated to a single file in order to be able to change it easily
+```
+$ npm install argon2
+```
+
 ## Login and create access/refresh tokens
 
 
