@@ -2,6 +2,8 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-co
 import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import "reflect-metadata";
+import { createSchema } from "./utils/createSchema";
+
 
 // lambda function calling itself immediately
 (async () => {
@@ -9,23 +11,14 @@ import "reflect-metadata";
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
   // Apply GraphQL stuff
-  const apolloServer = new ApolloServer({
-    typeDefs: `
-      type Query {
-          hello: String!
-      }
-      `,
-    resolvers: {
-      Query: {
-        hello: () => "hello world",
-      },
-    },
+  const graphqlServer = new ApolloServer({
+    schema: await createSchema(),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
   });
 
   // add the GaphQL stuff as middleware to the express server
-  await apolloServer.start();
-  await apolloServer.applyMiddleware({ app });
+  await graphqlServer.start();
+  await graphqlServer.applyMiddleware({ app });
 
   const port = 4000;
   app.listen(port, () => {

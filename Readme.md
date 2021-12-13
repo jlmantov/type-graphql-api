@@ -140,7 +140,36 @@ $ npm i -D apollo-server-core
 
 Note 2: Graphql Playground must be [configured](https://www.apollographql.com/docs/react/v2/get-started/#configuration-options) with `"request.credentials": "include",` if cookies are to be used.
 
+### Define schema using TypeGraphQL
+Very soon objects are going to be introduced and the code wil expand ... time for a little cleanup!
 
+The graphql schema is going to be provided by [TypeGraphQL](https://typegraphql.com/)
+```
+$ npm i type-graphql
+```
+
+The amount os schema definitions will grow - AND be used in both production and testing.
+Therefore, schema and resolver definitions are moved to `src/utils/createSchema.ts`
+
+While re-arranging the code, `src/modules/user/UserResolver.ts` is provided to verify that everything still works:
+```
+$ npm start
+```
+Go to GraphQL Playground and re-execute the query:
+```
+query {
+  hello
+}
+```
+
+The response should now be:
+```
+{
+  "data": {
+    "hello": "hi!"
+  }
+}
+```
 
 ## Login and create access/refresh tokens
 
