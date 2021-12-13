@@ -128,8 +128,17 @@ Here you can setup and run express/koa/any other framework.
 $ npm install graphql express apollo-server-express
 $ npm install --save-dev @types/express
 ```
+1. Modify index.ts - remove default stuff and add an express server, check if the server responds on port 4000
 
-Modify index.ts - remove default stuff and add an express server, check if the server responds on port 4000
+2. Now, let's get Apllo Server started and GraphQL responding...
+
+
+Note 1: I like the [GraphQL Playground](https://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#graphql-playgroundhttps://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#graphql-playground) look and feel. In order to get that, I chose to install the ApolloServerPluginLandingPageGraphQLPlayground plugin
+```
+$ npm i -D apollo-server-core
+```
+
+Note 2: Graphql Playground must be [configured](https://www.apollographql.com/docs/react/v2/get-started/#configuration-options) with `"request.credentials": "include",` if cookies are to be used.
 
 
 
