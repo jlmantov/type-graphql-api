@@ -123,6 +123,15 @@ Loaded users:  [
 Here you can setup and run express/koa/any other framework.
 ```
 
+### Setup GraphQL server
+```
+$ npm install graphql express apollo-server-express
+$ npm install --save-dev @types/express
+```
+
+Modify index.ts - remove default stuff and add an express server, check if the server responds on port 4000
+
+
 
 ## Login and create access/refresh tokens
 
