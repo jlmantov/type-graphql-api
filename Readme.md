@@ -242,6 +242,7 @@ The end result is 2 methods providing me with what I need
 2. verify: (hashedSalt: string, hashedPwd: string, pwd: string) => Promise&lt;boolean&gt;
 
 
+
 ### Create User mutation in GraphQL
 
 Modify `src/entity/User.ts`

@@ -4,6 +4,11 @@ import { hash, verify } from "../../utils/crypto";
 
 @Resolver()
 export class UserResolver {
+  @Query(() => [User])
+  users() {
+    return User.find();
+  }
+
   @Query(() => User) // Tell type-graphql that return value of this query is of type User
   async getUser(
     @Arg("email") email: string,
