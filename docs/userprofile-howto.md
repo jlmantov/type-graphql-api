@@ -3,9 +3,9 @@
 
 I've been speculating on how to implement a structure for having accounts, emails/logins and user profiles - so that one person (profile) can have multiple emails (logins) and multiple accounts with separate access rigths (login controls access rights).
 
-Google Cloud: [13 best practices for user account, authentication, and password management, 2021 edition](https://cloud.google.com/blog/products/identity-security/account-authentication-and-password-management-best-practices)
-[Data Structure Deep Dive](https://developer.mixpanel.com/docs/data-structure-deep-dive)
-[What Is User Profile? Why Is It Important? How To Implement It?](https://www.arnicasoftware.com/blog/what-is-user-profile-why-is-it-important-how-to-implement-it-/2825/index.aspx)
+Google Cloud: [13 best practices for user account, authentication, and password management, 2021 edition](https://cloud.google.com/blog/products/identity-security/account-authentication-and-password-management-best-practices)  
+[Data Structure Deep Dive](https://developer.mixpanel.com/docs/data-structure-deep-dive)  
+[What Is User Profile? Why Is It Important? How To Implement It?](https://www.arnicasoftware.com/blog/what-is-user-profile-why-is-it-important-how-to-implement-it-/2825/index.aspx)  
 
 Imagine a person having a user profile with different logins: one for work with specific company access rigths (through a specific work mobile or PC) and another personal account with completely different settings (most likely through another mobile or PC)...
 
