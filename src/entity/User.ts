@@ -1,4 +1,4 @@
-import { Field, ObjectType, Root } from "type-graphql";
+import { Field, Int, ObjectType, Root } from "type-graphql";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 /**
@@ -10,7 +10,7 @@ import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 @ObjectType()
 @Entity("Users") // tablename specified
 export class User extends BaseEntity {
-  @Field()
+  @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
 
