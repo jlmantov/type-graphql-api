@@ -97,6 +97,7 @@ $ touch docker-compose.yml
 If you'd like to get started using Docker, now is a good time to do it.
 I used this article to get started:
 [How to Create a MySql Instance with Docker Compose](https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee)
+... and a tutorial by [Kris Foster](https://www.youtube.com/playlist?list=PLdk2EmelRVLpIdCFolrwdLhCTHyeefU6W)  
 
 Startup database in a (deamon) background process:
 
