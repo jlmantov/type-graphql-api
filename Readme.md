@@ -192,7 +192,7 @@ $ npm i type-graphql
 The amount os schema definitions will grow - AND be used in both production and testing.
 Therefore, schema and resolver definitions are moved to `src/utils/createSchema.ts`
 
-While re-arranging the code, `src/modules/user/UserResolver.ts` is provided to verify that everything still works:
+While re-arranging the code, `src/modules/user/User.resolver.ts` is provided to verify that everything still works:
 
 ```
 $ npm start
@@ -226,17 +226,103 @@ Password encryption is isolated to a single file in order to be able to change i
 $ npm install argon2
 ```
 
+I am not 100% sure that I want to actually store salt and password seperately - maybe I even choose to store all parameters in every password (even though it would be LOTS of redundancy) ... for now, I choose to isolate password encryption/decryption in `src/utils/crypto.ts`. This way it is easier to apply future changes.
+
+We need to be able to
+1. hash a password and
+2. verify a given password (login attempt) against the stored hashed version
+
+Most default options are just fine - one thing though: I want to use argon2id, which differs from default.
+
+To begin with, I found it strange to store all parameters in each and every password, so I extracted salt and password - the two values that needs to be stored.
+By studying the `src/utils/crypto.ts` it appears that I did a fairly deep dive into argon2 to make sure that I did it correctly (maybe not intentional, but correctly).
+
+The end result is 2 methods providing me with what I need
+1. hash: (pwd: string) => Promise&lt;CryptoResponse&gt;
+2. verify: (hashedSalt: string, hashedPwd: string, pwd: string) => Promise&lt;boolean&gt;
 
 
 ### Create User mutation in GraphQL
 
 Modify `src/entity/User.ts`
 
-1. Add email, salt and password to DB
+1. Add email, salt and password (using argon2id) to DB
 2. In order to make type-graphql understand the datastructure, add @ObjectType to entity
 3. add name (combined firstName & lastName) as a schema field which is not stored in DB ... just for the fun of it
 
-Modify `src/modules/user/UserResolver.ts`
+When project is growing, I'd like to maintain a structure in my filenames like `User.resolver.ts`, `User.test.ts` and so on...
+`src/modules/user/UserResolver.ts` is renamed to `src/modules/user/User.resolver.ts`
+
+
+To verify password encryption/verification, add two temptorary methods to `src/modules/user/User.resolver.ts`
+
+Mutation: `register(firstname, lastname, email, password)`
+1. Make sure the email is not already stored in the database
+2. use password as input to argon2id to create hashed salt+password
+3. create new User object, exchanging the password with the hashed values
+4. store the object in database
+5. return the new user object to GraphQL
+
+
+GraphQL Playground
+```
+mutation {
+  register(
+    firstname: "John"
+    lastname: "Doe"
+    email: "john.doe@mail.com"
+    password: "asdf1234"
+  ) {
+    id
+    firstName
+    lastName
+    email
+    name
+  }
+}
+```
+Response:
+```
+{
+  "data": {
+    "register": {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@email.com",
+      "name": "John Doe"
+    }
+  }
+}
+```
+
+Query: `getUser(email, password)`
+1. use email to find stored User in the database
+2. verify the given password against the stored hashed values
+3. return User if validated, null otherwise
+
+GraphQL Playground
+```
+query {
+  getUser(email: "john.doe@mail.com", password:"asdf1234") {
+    id
+    name
+    email
+  }
+}
+```
+Response:
+```
+{
+  "data": {
+    "getUser": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@mail.com"
+    }
+  }
+}
+```
 
 
 

@@ -1,5 +1,5 @@
 import { buildSchema } from "type-graphql";
-import { UserResolver } from "../modules/user/UserResolver";
+import { UserResolver } from "../modules/user/User.resolver";
 
 /**
  * used for both testing and production

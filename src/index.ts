@@ -2,6 +2,7 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-co
 import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import "reflect-metadata";
+import { createConnection } from "typeorm";
 import { createSchema } from "./utils/createSchema";
 
 
@@ -9,6 +10,10 @@ import { createSchema } from "./utils/createSchema";
 (async () => {
   const app = express();
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
+
+  await createConnection(); // create database connection.
+  // In case synchronization is set to true, any missing tables and fields will be created
+  // ... which is helpful in development - make sure synchronization is NOT used in PRODUCTION
 
   // Apply GraphQL stuff
   const graphqlServer = new ApolloServer({
