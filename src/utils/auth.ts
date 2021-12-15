@@ -1,4 +1,5 @@
-import jwt, { SignOptions } from "jsonwebtoken";
+import { Request, Response } from "express";
+import jwt, { JsonWebTokenError, SignOptions, verify } from "jsonwebtoken";
 import { User } from "../entity/User";
 
 /**
@@ -33,7 +34,45 @@ export const createRefreshToken = async (user: User) => {
   return await jwt.sign(refreshPayload, process.env.JWT_REFRESH_TOKEN_SECRET!, refreshOptions);
 };
 
+export const sendRefreshToken = (res: Response, refreshToken: string) => {
+  res.cookie("jid", refreshToken, { httpOnly: true }); // name it something anonymous - so nobody gets any clue to what's going on...
+};
+
+export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) => {
+  // Create a POST request with a cookie attached - in Postman (or similar)
+  // console.log("refreshtoken req.cookies: ", req.cookies);
+  // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
+  const token = req.cookies.jid;
+  if (!token) {
+    return res.send({ ok: false, accessToken: "" });
+  }
+
+  let payload: any = null;
+  try {
+    payload = verify(token, jwtRefreshSecretKey);
+  } catch (error) {
+    if (error instanceof JsonWebTokenError) {
+      console.error("JsonWebTokenError: " + error.message + "!"); // 'jwt expired!'
+    }
+    return res.send({ ok: false, accessToken: "", error: error.message });
+  }
+
+  //  token is valid and we can return an accessToken
+  const user = await User.findOne({ id: payload.userId });
+  if (!user) {
+    // this should not really happen since userId comes from refreshToken - but then again... anything is possible
+    return res.send({ ok: false, accessToken: "" });
+  }
+
+  // update refreshToken as well
+  const refreshToken = await createRefreshToken(user);
+  sendRefreshToken(res, refreshToken);
+
+  return res.send({ ok: true, accessToken: await createAccessToken(user) });
+};
+
 export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;
+export const jwtRefreshSecretKey = process.env.JWT_REFRESH_TOKEN_SECRET!;
 
 // JSON Web Token secret value related to the server/domain. Used to validate requests
 // this should be protected and kept in a .env file - like DB logins etc.

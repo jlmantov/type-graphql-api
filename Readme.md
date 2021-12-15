@@ -384,14 +384,29 @@ By adding authentication as middleware, the authentication is performed before t
 
 When accessing authenticated (personal) data, the user should be extracted from the token - meaning that user is identified through the token's payload: userId.
 
-
 ### Temporary TypeGraphQL Query: isAuthenticated - for testing purposes
 
-Since the token is accessed inside a middleware function, that runs *before* the query/mutation (in a different scope), the token payload is now added to `src/utils/GraphqlContext.ts` in order to make payload content accessible to queries/mutations.
+Since the token is accessed inside a middleware function, that runs _before_ the query/mutation (in a different scope), the token payload is now added to `src/utils/GraphqlContext.ts` in order to make payload content accessible to queries/mutations.
 
-Note that payload is __optional__  in `GraphqlContext` - after all, it should still be possible to access req/res inside publicly accessible queries/mutations.
+Note that payload is **optional** in `GraphqlContext` - after all, it should still be possible to access req/res inside publicly accessible queries/mutations.
 
+## Refresh the accessToken
 
-## Refresh the token
+In order to extract refreshToken from the cookie sent by client:
+
+```
+$ npm i cookie-parser
+$ npm i -D @types/cookie-parser
+```
+
+1. Add cookie-parser to project in order to access the refreshToken cookie
+2. Add `renew_accesstoken` route to `src/index.ts`
+3. implement `handleJwtRefreshTokenRequest`
+
+This is where I start thinking about creating a UserController ... for now, let's place `handleJwtRefreshTokenRequest` inside `src/utils/auth.ts`.
+
+One tiny addition: Now, the refreshToken cookie is going to be set 2 different places - so this is refactored into its own method: `sendRefreshToken`
 
 ## Revoke tokens for a user (change passord)
+
+

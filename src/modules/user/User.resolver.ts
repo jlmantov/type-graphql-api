@@ -9,7 +9,7 @@ import {
   UseMiddleware
 } from "type-graphql";
 import { User } from "../../entity/User";
-import { createAccessToken, createRefreshToken } from "../../utils/auth";
+import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../utils/auth";
 import { hash, verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
@@ -69,7 +69,7 @@ export class UserResolver {
 
     // login successful, no create 1. refresh token and 2. access token
     const refreshToken = await createRefreshToken(user);
-    ctx.res.cookie("jid", refreshToken, { httpOnly: true }); // name it something anonymous - so nobody gets any clue to what's going on...
+    sendRefreshToken(ctx.res, refreshToken);
 
     // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
     const accessToken = await createAccessToken(user);

@@ -1,15 +1,18 @@
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ApolloServer } from "apollo-server-express";
+import cookieParser from "cookie-parser";
 import "dotenv/config";
 import express from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
+import { handleJwtRefreshTokenRequest } from "./utils/auth";
 import { createSchema } from "./utils/createSchema";
-
 
 // lambda function calling itself immediately
 (async () => {
   const app = express();
+  app.use(cookieParser());
+  app.post("/renew_accesstoken", async (req, res) => handleJwtRefreshTokenRequest(req, res));
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
   await createConnection(); // create database connection.
