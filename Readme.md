@@ -97,7 +97,8 @@ $ touch docker-compose.yml
 If you'd like to get started using Docker, now is a good time to do it.
 I used this article to get started:
 [How to Create a MySql Instance with Docker Compose](https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee)
-... and a tutorial by [Kris Foster](https://www.youtube.com/playlist?list=PLdk2EmelRVLpIdCFolrwdLhCTHyeefU6W)  
+... and a tutorial by [Kris Foster](https://www.youtube.com/playlist?list=PLdk2EmelRVLpIdCFolrwdLhCTHyeefU6W)
+
 
 Startup database in a (deamon) background process:
 
@@ -301,7 +302,7 @@ Response:
 Query: `getUser(email, password)`
 1. use email to find stored User in the database
 2. verify the given password against the stored hashed values
-3. return User if validated, null otherwise
+3. return User if validated, otherwise throw an error
 
 GraphQL Playground
 ```
@@ -328,7 +329,32 @@ Response:
 
 
 
-## Login and create access/refresh tokens
+## Login and create access token + refresh token
+
+```
+$ npm i jsonwebtoken
+$ npm i -D @types/jsonwebtoken
+```
+
+### Login and access token
+
+The temporary graphql method `getUser()` is actually pretty close to the login we want. We just need to tweek it a little bit - add a [JSON Web Token](https://www.npmjs.com/package/jsonwebtoken) to the response and such...
+
+1. Instead of returning User, login will return a JSON Web Token ... or an error.
+
+2. I regret splitting (argon2 specific) salt and password into two fields, so now I change that and concat them into hashedPwd
+
+3. JSON Web Token needs a server-/domain-specific secret in order to do the validation
+
+NOTE: This gitHub boilerplate-repository need some changes with regards to safety, in order to mature into production.
+
+Database parameters, JWT secret key etc. should be protected and loaded into memory at runtime (ex. from a .env file) - not like this, stored in a file inside the repository, available in cleartext for everybody to access the source files.
+
+For now, I follow the same (dev) path: jwtSecret is stored in `src/utils/crypto.ts` ... and of course, the value is expected to be changed into something - well, secret!!!
+
+
+### refresh token
+
 
 
 
