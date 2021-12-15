@@ -33,6 +33,8 @@ export const createRefreshToken = async (user: User) => {
   return await jwt.sign(refreshPayload, process.env.JWT_REFRESH_TOKEN_SECRET!, refreshOptions);
 };
 
+export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;
+
 // JSON Web Token secret value related to the server/domain. Used to validate requests
 // this should be protected and kept in a .env file - like DB logins etc.
 // export const jwtAccessSecretKey =

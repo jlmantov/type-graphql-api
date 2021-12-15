@@ -340,10 +340,9 @@ $ npm i dotenv
 ```
 
 The same way argon2 is 'stoved away' in a separate file, let's create `src/utils/auth.ts` and do the same - isolate JWT in a single file and access the functionality through method calls:
+
 - createAccessToken(user)
 - createRefreshToken(user)
-
-
 
 ### refresh token
 
@@ -375,10 +374,23 @@ Open Developer Tools (one way to to it is right click -> inspect), go to Network
 
 Instead of Network, one can also select Application and inspect the Cookie from there.
 
-
-
+By the way: I don't really think `login` is a TypeGraphQL mutation - the database is queried but not modified, so I decided to convert it to a Query.
 
 ## Authenticated mutations and queries
+
+In order to authenticate queries (separate personal stuff from public access), `src/utils/isAuth` is added as a Middleware function.
+
+By adding authentication as middleware, the authentication is performed before the query/mutation takes place.
+
+When accessing authenticated (personal) data, the user should be extracted from the token - meaning that user is identified through the token's payload: userId.
+
+
+### Temporary TypeGraphQL Query: isAuthenticated - for testing purposes
+
+Since the token is accessed inside a middleware function, that runs *before* the query/mutation (in a different scope), the token payload is now added to `src/utils/GraphqlContext.ts` in order to make payload content accessible to queries/mutations.
+
+Note that payload is __optional__  in `GraphqlContext` - after all, it should still be possible to access req/res inside publicly accessible queries/mutations.
+
 
 ## Refresh the token
 

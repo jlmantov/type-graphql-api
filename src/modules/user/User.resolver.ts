@@ -1,8 +1,18 @@
-import { Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Ctx,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+  UseMiddleware
+} from "type-graphql";
 import { User } from "../../entity/User";
 import { createAccessToken, createRefreshToken } from "../../utils/auth";
 import { hash, verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
+import { isAuth } from "../../utils/isAuth";
 
 /**
  * saince this is a return value in GraphQL, we need to let GraphQL know about it - so it becomes an @ObjectType
@@ -39,7 +49,7 @@ export class UserResolver {
     return user;
   }
 
-  @Mutation(() => LoginResponse) // Tell type-graphql that return value of this mutation is of type LoginResponse
+  @Query(() => LoginResponse) // Tell type-graphql that return value of this mutation is of type LoginResponse
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,
@@ -58,19 +68,23 @@ export class UserResolver {
     }
 
     // login successful, no create 1. refresh token and 2. access token
-    ctx.res.cookie(
-      "jid", // name it something anonymous - so nobody gets any clue to what's going on...
-      await createRefreshToken(user),
-      {
-        httpOnly: true,
-      }
-    );
+    const refreshToken = await createRefreshToken(user);
+    ctx.res.cookie("jid", refreshToken, { httpOnly: true }); // name it something anonymous - so nobody gets any clue to what's going on...
 
     // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
     const accessToken = await createAccessToken(user);
     return {
       accessToken,
     };
+  }
+
+  @Query(() => String)
+  @UseMiddleware(isAuth)
+  isAuthenticated(@Ctx() { payload }: GraphqlContext) {
+    console.log(`userId ${payload!.userId} is authenticated!`);
+    // By adding authentication as middleware, the authentication is performed before the query takes place.
+    // since isAuth is going to throw an error in case payload is missing, we can access payload directly from here
+    return `userId ${payload!.userId} is authenticated!`;
   }
 
   @Mutation(() => User)
