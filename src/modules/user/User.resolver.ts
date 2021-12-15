@@ -1,7 +1,7 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import { Arg, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import { User } from "../../entity/User";
-import { hash, jwtsecretKey, verify } from "../../utils/crypto";
+import { hash, verify } from "../../utils/crypto";
 
 /**
  * saince this is a return value in GraphQL, we need to let GraphQL know about it - so it becomes an @ObjectType
@@ -65,7 +65,7 @@ export class UserResolver {
     // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
 
     return {
-      accessToken: jwt.sign(payload, jwtsecretKey, options),
+      accessToken: jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_SECRET!, options),
     };
   }
 

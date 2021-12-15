@@ -353,6 +353,14 @@ Database parameters, JWT secret key etc. should be protected and loaded into mem
 For now, I follow the same (dev) path: jwtSecret is stored in `src/utils/crypto.ts` ... and of course, the value is expected to be changed into something - well, secret!!!
 
 
+### Dotenv
+No, actually it's very easy to do it right: store config parameters in a `.env` file, so let's get on with it
+```
+$ npm i dotenv
+```
+
+
+
 ### refresh token
 
 
