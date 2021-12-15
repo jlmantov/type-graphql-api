@@ -7,8 +7,6 @@ If this is helpful to others - please, be my guest. My personal mindset includes
 
 Based on a mix of [tutorials and articles](./docs/links.md)
 
-
-
 ## Technologies
 
 - TypeScript
@@ -17,8 +15,6 @@ Based on a mix of [tutorials and articles](./docs/links.md)
 - TypeORM
 - MySQL
 - Apollo (with express)
-
-
 
 ## Setup GraphQL server using TypeGraphQL and TypeORM
 
@@ -32,8 +28,6 @@ $ npm run typescript -v
 $ tsc -v
 ```
 
-
-
 ### Init project
 
 Init typeORM (from rootDir's parent directory) - [Quick Start](https://typeorm.io/#undefined/quick-start)
@@ -43,8 +37,6 @@ $ npm i -g typeorm
 $ typeorm init --name type-graphql-api --database mysql
 $ cd type-graphql-api
 ```
-
-
 
 ### Hello Github
 
@@ -58,8 +50,6 @@ $ git branch -M main
 $ git remote add origin https://github.com/<MyProfile>/type-graphql-api.git
 $ git push -u origin main
 ```
-
-
 
 ### Config TypeORM
 
@@ -82,8 +72,6 @@ Optionally run `tsc --init` or consult [Stack Overflow](https://stackoverflow.co
 
 I chose this [setup](https://github.com/jlmantov/type-graphql-api/blob/main/tsconfig.json) (same as Ben Awad's tutorial).
 
-
-
 ### Setup a local Docker MySQL database
 
 (NB: no need to do this, almost any database connection will do - pick your favourite. :)
@@ -99,7 +87,6 @@ I used this article to get started:
 [How to Create a MySql Instance with Docker Compose](https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee)
 ... and a tutorial by [Kris Foster](https://www.youtube.com/playlist?list=PLdk2EmelRVLpIdCFolrwdLhCTHyeefU6W)
 
-
 Startup database in a (deamon) background process:
 
 ```
@@ -112,23 +99,17 @@ Shutdown database (deamon):
 $ docker-compose down
 ```
 
-
-
 ### Add Database driver to project
 
 ```
 $ npm install --save mysql2
 ```
 
-
-
 ### Modify `ormconfig.json` according to local settings
 
 My docker-compose.yml looks like [this](https://github.com/jlmantov/type-graphql-api/blob/main/docker-compose.yml)
 
 ...and this is how ormconfig.json looks like [this](https://github.com/jlmantov/type-graphql-api/blob/main/ormconfig.json)
-
-
 
 ### Test DB connection
 
@@ -158,8 +139,6 @@ Here you can setup and run express/koa/any other framework.
 
 OK, the database is up and running, TypeORM is connecting to it and provides data .... let's move on.
 
-
-
 ### Setup GraphQL server
 
 ```
@@ -178,8 +157,6 @@ $ npm i -D apollo-server-core
 ```
 
 Note 2: Graphql Playground must be [configured](https://www.apollographql.com/docs/react/v2/get-started/#configuration-options) with `"request.credentials": "include",` if cookies are to be used.
-
-
 
 ### Define schema using TypeGraphQL
 
@@ -218,8 +195,6 @@ The response should now be:
 }
 ```
 
-
-
 ### Password encryption
 
 Password encryption is isolated to a single file in order to be able to change it easily
@@ -231,6 +206,7 @@ $ npm install argon2
 I am not 100% sure that I want to actually store salt and password seperately - maybe I even choose to store all parameters in every password (even though it would be LOTS of redundancy) ... for now, I choose to isolate password encryption/decryption in `src/utils/crypto.ts`. This way it is easier to apply future changes.
 
 We need to be able to
+
 1. hash a password and
 2. verify a given password (login attempt) against the stored hashed version
 
@@ -240,10 +216,9 @@ To begin with, I found it strange to store all parameters in each and every pass
 By studying the `src/utils/crypto.ts` it appears that I did a fairly deep dive into argon2 to make sure that I did it correctly (maybe not intentional, but correctly).
 
 The end result is 2 methods providing me with what I need
+
 1. hash: (pwd: string) => Promise&lt;CryptoResponse&gt;
 2. verify: (hashedSalt: string, hashedPwd: string, pwd: string) => Promise&lt;boolean&gt;
-
-
 
 ### Create User mutation in GraphQL
 
@@ -256,18 +231,18 @@ Modify `src/entity/User.ts`
 When project is growing, I'd like to maintain a structure in my filenames like `User.resolver.ts`, `User.test.ts` and so on...
 `src/modules/user/UserResolver.ts` is renamed to `src/modules/user/User.resolver.ts`
 
-
 To verify password encryption/verification, add two temptorary methods to `src/modules/user/User.resolver.ts`
 
 Mutation: `register(firstname, lastname, email, password)`
+
 1. Make sure the email is not already stored in the database
 2. use password as input to argon2id to create hashed salt+password
 3. create new User object, exchanging the password with the hashed values
 4. store the object in database
 5. return the new user object to GraphQL
 
-
 GraphQL Playground
+
 ```
 mutation {
   register(
@@ -284,7 +259,9 @@ mutation {
   }
 }
 ```
+
 Response:
+
 ```
 {
   "data": {
@@ -300,11 +277,13 @@ Response:
 ```
 
 Query: `getUser(email, password)`
+
 1. use email to find stored User in the database
 2. verify the given password against the stored hashed values
 3. return User if validated, otherwise throw an error
 
 GraphQL Playground
+
 ```
 query {
   getUser(email: "john.doe@mail.com", password:"asdf1234") {
@@ -314,7 +293,9 @@ query {
   }
 }
 ```
+
 Response:
+
 ```
 {
   "data": {
@@ -326,8 +307,6 @@ Response:
   }
 }
 ```
-
-
 
 ## Login and create access token + refresh token
 
@@ -352,28 +331,55 @@ Database parameters, JWT secret key etc. should be protected and loaded into mem
 
 For now, I follow the same (dev) path: jwtSecret is stored in `src/utils/crypto.ts` ... and of course, the value is expected to be changed into something - well, secret!!!
 
-
 ### Dotenv
+
 No, actually it's very easy to do it right: store config parameters in a `.env` file, so let's get on with it
+
 ```
 $ npm i dotenv
 ```
 
+The same way argon2 is 'stoved away' in a separate file, let's create `src/utils/auth.ts` and do the same - isolate JWT in a single file and access the functionality through method calls:
+- createAccessToken(user)
+- createRefreshToken(user)
+
 
 
 ### refresh token
+
+Refresh token is not part of every request like the access token - it doesn't follow the client workflow, so it would be clumsy to carry it around everywhere.
+
+Refresh token is used for "transparent" re-login when the access token expires - it should have it's own API path and be treated differently.
+
+Let's store the refresh token in a Cookie - which means:
+
+=> Alter the express response from where GraphQL resides (inside the Apolloserver)
+
+=> Add express request + response to ApolloServer Context, which makes it available to TypeGraphQL resolvers
+
+=> Add (TypeGraphQL) Context to resolvers where needed
+
+=> Create a ContextType in order for TypeScript to understand and validate the context correctly
+
+=> In the TypeGraphQL resolver (where the refresh token is created), add @Ctx() to the list of input parameters
+
+### Test cookie in GraphQL Playground
+
+NOTE: Verify that GraphQL Playground settings is actually prepared for handling cookies: `"request.credentials": "include"`
+
+Open Developer Tools (one way to to it is right click -> inspect), go to Network, first clear the list, execute and then grap the right request:
+
+- Response Headers should include `Set-Cookie: jid=.....`
+- Response should include login, holding the accessToken
+- Cookie named 'jid' should be part of the response
+
+Instead of Network, one can also select Application and inspect the Cookie from there.
 
 
 
 
 ## Authenticated mutations and queries
 
-
-
 ## Refresh the token
 
-
-
 ## Revoke tokens for a user (change passord)
-
-

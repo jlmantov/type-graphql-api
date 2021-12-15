@@ -1,5 +1,6 @@
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ApolloServer } from "apollo-server-express";
+import "dotenv/config";
 import express from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
@@ -19,6 +20,7 @@ import { createSchema } from "./utils/createSchema";
   const graphqlServer = new ApolloServer({
     schema: await createSchema(),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
+    context: ({ req, res }) => ({ req, res }),
   });
 
   // add the GaphQL stuff as middleware to the express server

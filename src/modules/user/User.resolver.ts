@@ -1,7 +1,8 @@
-import jwt, { SignOptions } from "jsonwebtoken";
-import { Arg, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import { User } from "../../entity/User";
+import { createAccessToken, createRefreshToken } from "../../utils/auth";
 import { hash, verify } from "../../utils/crypto";
+import { GraphqlContext } from "../../utils/GraphqlContext";
 
 /**
  * saince this is a return value in GraphQL, we need to let GraphQL know about it - so it becomes an @ObjectType
@@ -41,7 +42,8 @@ export class UserResolver {
   @Mutation(() => LoginResponse) // Tell type-graphql that return value of this mutation is of type LoginResponse
   async login(
     @Arg("email") email: string,
-    @Arg("password") password: string
+    @Arg("password") password: string,
+    @Ctx() ctx: GraphqlContext
   ): Promise<LoginResponse> {
     // make TypeScritp verify that we are returning a promise of the type LoginResponse
     const user = await User.findOne({ where: { email } });
@@ -55,17 +57,19 @@ export class UserResolver {
       throw new Error("Invalid username or password!");
     }
 
-    // login successful, now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
-    const payload = { userId: user.id }; // typesafety - could be: parseInt(user.id.toString())
-    const options: SignOptions = {
-      header: { alg: "HS384", typ: "JWT" },
-      expiresIn: "15m",
-      algorithm: "HS384",
-    };
-    // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
+    // login successful, no create 1. refresh token and 2. access token
+    ctx.res.cookie(
+      "jid", // name it something anonymous - so nobody gets any clue to what's going on...
+      await createRefreshToken(user),
+      {
+        httpOnly: true,
+      }
+    );
 
+    // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
+    const accessToken = await createAccessToken(user);
     return {
-      accessToken: jwt.sign(payload, process.env.JWT_ACCESS_TOKEN_SECRET!, options),
+      accessToken,
     };
   }
 
