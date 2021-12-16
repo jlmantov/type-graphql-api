@@ -422,3 +422,15 @@ Now, refreshToken is invalidated by incrementing tokenVersion in the database on
 
 Notice that the accessToken is still valid until it expires.
 
+
+Wait, can't we revoke the accessTokens as well?
+
+Yes, we can - but it requires a lookup in the database in order to compare tokenversion.
+
+You should ask yourself: Is it worth adding an extra DB User lookup to every single website request?
+
+If you decide that it *is* worth it, here's how it can be done:
+- add tokenVersion to the accessToken payload
+- modify `revokeRefreshTokens` to also update the context when invalidation takes place
+- add User lookup to the `isAuth` middleware function - be aware that it changes `isAuth` into an async function
+

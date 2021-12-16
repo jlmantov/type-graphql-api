@@ -1,4 +1,5 @@
 import { MiddlewareFn } from "type-graphql";
+import { User } from "../entity/User";
 import { getJwtAccessPayload, JwtAccessPayload } from "./auth";
 import { GraphqlContext } from "./GraphqlContext";
 
@@ -8,7 +9,7 @@ import { GraphqlContext } from "./GraphqlContext";
  * @param context where request is available
  * @param next
  */
-export const isAuth: MiddlewareFn<GraphqlContext> = ({ context }, next) => {
+export const isAuth: MiddlewareFn<GraphqlContext> = async ({ context }, next) => {
   const authorization = context.req.headers["authorization"];
 
   if (!authorization) {
@@ -19,6 +20,16 @@ export const isAuth: MiddlewareFn<GraphqlContext> = ({ context }, next) => {
   try {
     const token = authorization.split(" ")[1];
     const payload: JwtAccessPayload = getJwtAccessPayload(token); // verified attribute userId
+    console.log("isAuth payload", JSON.stringify(payload));
+
+    const user = await User.findOne(payload.userId);
+    if (!user) {
+      throw new Error('Unable to verify user!');
+    }
+    if (user.tokenVersion !== payload.v) {
+      // console.log(`isAuth: payload.tokenVersion=${payload.v}, DB tokenVersion=${user.tokenVersion}`);
+      throw new Error("Access expired, please login again!");
+    }
 
     // make payload available inside resolver by adding it to the context
     context.payload = payload;

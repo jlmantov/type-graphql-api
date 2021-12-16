@@ -6,6 +6,7 @@ import { GraphqlContext } from "./GraphqlContext";
 
 export interface JwtAccessPayload {
   userId: string;
+  v: number;
 }
 
 /**
@@ -13,7 +14,7 @@ export interface JwtAccessPayload {
  * @returns JWT accessToken
  */
 export const createAccessToken = async (user: User) => {
-  const accessPayload = { userId: user.id }; // typesafety - could be: parseInt(user.id.toString())
+  const accessPayload = { userId: user.id, v: user.tokenVersion }; // typesafety - could be: parseInt(user.id.toString())
   const accessOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
     expiresIn: "15m",
@@ -131,6 +132,10 @@ export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<Boolean>
   if (result.affected !== 1) {
     return false;
   }
+
+  // In order to avoid loking up user on every isAuth request, increment context directly
+  ctx.payload!.v = parseInt(ctx.payload!.v.toString()) + 1;
+
   console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
   return true;
 };
