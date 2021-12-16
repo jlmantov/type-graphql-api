@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
-import jwt, { JsonWebTokenError, SignOptions, verify } from "jsonwebtoken";
+import jwt, { SignOptions, verify } from "jsonwebtoken";
 import { User } from "../entity/User";
 
+export interface JwtAccessPayload {
+  userId: string;
+}
+
 /**
- *
  * @param user the user who attempts to login
- * @returns
+ * @returns JWT accessToken
  */
 export const createAccessToken = async (user: User) => {
   const accessPayload = { userId: user.id }; // typesafety - could be: parseInt(user.id.toString())
@@ -19,12 +22,11 @@ export const createAccessToken = async (user: User) => {
 };
 
 /**
- *
  * @param user the user who attempts to login
- * @returns
+ * @returns JWT refreshToken
  */
 export const createRefreshToken = async (user: User) => {
-  const refreshPayload = { userId: user.id }; // typesafety - could be: parseInt(user.id.toString())
+  const refreshPayload = { userId: user.id, v: user.tokenVersion };
   const refreshOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
     expiresIn: "7d",
@@ -34,10 +36,23 @@ export const createRefreshToken = async (user: User) => {
   return await jwt.sign(refreshPayload, process.env.JWT_REFRESH_TOKEN_SECRET!, refreshOptions);
 };
 
+/**
+ * renew cookie content, replace refreshToken
+ * @param res express response
+ * @param refreshToken
+ */
 export const sendRefreshToken = (res: Response, refreshToken: string) => {
   res.cookie("jid", refreshToken, { httpOnly: true }); // name it something anonymous - so nobody gets any clue to what's going on...
 };
 
+/**
+ * 1. get refreshToken from cookie,
+ * 2. call jsonwebtoken.verify
+ * 3. verify tokenVersion in DB
+ * 4. generate new accessToken or deny access (require re-login)
+ * @param req express request
+ * @param res express response
+ */
 export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) => {
   // Create a POST request with a cookie attached - in Postman (or similar)
   // console.log("refreshtoken req.cookies: ", req.cookies);
@@ -51,17 +66,29 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   try {
     payload = verify(token, jwtRefreshSecretKey);
   } catch (error) {
-    if (error instanceof JsonWebTokenError) {
-      console.error("JsonWebTokenError: " + error.message + "!"); // 'jwt expired!'
-    }
+    console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
     return res.send({ ok: false, accessToken: "", error: error.message });
   }
 
   //  token is valid and we can return an accessToken
   const user = await User.findOne({ id: payload.userId });
   if (!user) {
-    // this should not really happen since userId comes from refreshToken - but then again... anything is possible
+    // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
     return res.send({ ok: false, accessToken: "" });
+  }
+
+  // console.log(
+  //   `handleJwtRefreshTokenRequest: payload.v=${payload.v}, DB tokenVersion=${user.tokenVersion}`
+  // );
+  if (user.tokenVersion !== payload.v) {
+    // If user has forgotten password/changed password or for some reason decides to invalidate existing sessions,
+    // this is how it is done:
+    // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
+    return res.send({
+      ok: false,
+      accessToken: "",
+      error: "refreshToken expired, please login again!",
+    });
   }
 
   // update refreshToken as well
@@ -69,6 +96,25 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   sendRefreshToken(res, refreshToken);
 
   return res.send({ ok: true, accessToken: await createAccessToken(user) });
+};
+
+/**
+ * call jsonwebtoken.verify, then verify existense of userId in payload
+ * @param token accessToken
+ */
+export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
+  try {
+    const jwtPayload: any = verify(token, jwtAccessSecretKey);
+    if (!jwtPayload || jwtPayload instanceof String) {
+      throw new Error("Unknown token!");
+    }
+    if (!jwtPayload.userId) {
+      throw new Error("Invalid token!");
+    }
+    return jwtPayload;
+  } catch (error) {
+    throw error; // forward error handling to caller
+  }
 };
 
 export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;

@@ -15,7 +15,7 @@ import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
 
 /**
- * saince this is a return value in GraphQL, we need to let GraphQL know about it - so it becomes an @ObjectType
+ * login returns a token in GraphQL, so we need to let TypeGraphQL know about it - so it becomes an @ObjectType
  */
 @ObjectType()
 class LoginResponse {
@@ -25,18 +25,20 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolver {
-  @Query(() => [User])
-  users() {
+  @Query(() => [User]) // Tell type-graphql that return value is an array of type User
+  @UseMiddleware(isAuth)
+  users(): Promise<User[]> {
+    // tell TypeScript that users returns a promise with an array of type User
     return User.find();
   }
 
-  @Query(() => User) // Tell type-graphql that return value of this query is of type User
+  @Query(() => User) // Tell type-graphql that return value is of type User
   async getUser(
     @Arg("email") email: string,
     @Arg("password") password: string
   ): Promise<User | null> {
+    // tell TypeScript that getUser returns a promise of type User or null
     const user = await User.findOne({ where: { email } });
-
     if (!user) {
       return null;
     }
@@ -49,13 +51,13 @@ export class UserResolver {
     return user;
   }
 
-  @Query(() => LoginResponse) // Tell type-graphql that return value of this mutation is of type LoginResponse
+  @Query(() => LoginResponse) // Tell type-graphql that return value is of type LoginResponse
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,
     @Ctx() ctx: GraphqlContext
   ): Promise<LoginResponse> {
-    // make TypeScritp verify that we are returning a promise of the type LoginResponse
+    // tell TypeScript that login returns a promise of type LoginResponse
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
@@ -78,26 +80,29 @@ export class UserResolver {
     };
   }
 
-  @Query(() => String)
+  @Query(() => String) // Tell type-graphql that return value is of type String
   @UseMiddleware(isAuth)
-  isAuthenticated(@Ctx() { payload }: GraphqlContext) {
-    console.log(`userId ${payload!.userId} is authenticated!`);
+  isAuthenticated(@Ctx() { payload }: GraphqlContext): String {
+    // tell TypeScript that isAuthenticated returns a String
+
     // By adding authentication as middleware, the authentication is performed before the query takes place.
-    // since isAuth is going to throw an error in case payload is missing, we can access payload directly from here
+    // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
+    console.log(`isAuthenticated: userId ${payload!.userId} is authenticated!`);
     return `userId ${payload!.userId} is authenticated!`;
   }
 
-  @Mutation(() => User)
+  @Mutation(() => User) // Tell type-graphql that return value is of type User
   async register(
     @Arg("firstname") firstName: string,
     @Arg("lastname") lastName: string,
     @Arg("email") email: string,
     @Arg("password") password: string
   ): Promise<User | null> {
+    // tell TypeScript that getUser returns a promise of type User or null
+
     // first of all, find out if email is already in the database
     const registeredUser = await User.findOne({ where: { email } });
     // console.log("registeredUser", registeredUser);
-
     if (registeredUser) {
       throw new Error("Error: user already exist!"); // avoid duplicates
     }

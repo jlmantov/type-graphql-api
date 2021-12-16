@@ -407,6 +407,9 @@ This is where I start thinking about creating a UserController ... for now, let'
 
 One tiny addition: Now, the refreshToken cookie is going to be set 2 different places - so this is refactored into its own method: `sendRefreshToken`
 
+### Beautify
+
+The intensions of isolating JWT to a single file nearly fell apart, a `jsonwebtoken.verify` call snug into `src/utils/isAuth.ts`.
+Lets beautify and strengthen TypeScript validation while we're at it...
+
 ## Revoke tokens for a user (change passord)
-
-
