@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import jwt, { SignOptions, verify } from "jsonwebtoken";
+import { getConnection } from "typeorm";
 import { User } from "../entity/User";
+import { GraphqlContext } from "./GraphqlContext";
 
 export interface JwtAccessPayload {
   userId: string;
@@ -115,6 +117,22 @@ export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
   } catch (error) {
     throw error; // forward error handling to caller
   }
+};
+
+/**
+ * By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
+ * @param ctx
+ * @returns Promise of type Boolean - true if increment on db tokenVersion  affected 1 row, false otherwise
+ */
+export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<Boolean> => {
+  const result = await getConnection()
+    .getRepository(User)
+    .increment({ id: parseInt(ctx.payload!.userId) }, "tokenVersion", 1);
+  if (result.affected !== 1) {
+    return false;
+  }
+  console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
+  return true;
 };
 
 export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;

@@ -413,3 +413,12 @@ The intensions of isolating JWT to a single file nearly fell apart, a `jsonwebto
 Lets beautify and strengthen TypeScript validation while we're at it...
 
 ## Revoke tokens for a user (change passord)
+
+Time to add a revoke method in order to invalidate tokens when password is changed:
+- add `revokeRefreshTokens` in `src/utils/auth.ts`
+- create (temporary) mutation for testing purposes
+
+Now, refreshToken is invalidated by incrementing tokenVersion in the database on the User object.
+
+Notice that the accessToken is still valid until it expires.
+

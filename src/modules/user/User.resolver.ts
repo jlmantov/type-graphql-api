@@ -9,7 +9,12 @@ import {
   UseMiddleware
 } from "type-graphql";
 import { User } from "../../entity/User";
-import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../utils/auth";
+import {
+  createAccessToken,
+  createRefreshToken,
+  revokeRefreshTokens,
+  sendRefreshToken
+} from "../../utils/auth";
 import { hash, verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
@@ -89,6 +94,14 @@ export class UserResolver {
     // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
     console.log(`isAuthenticated: userId ${payload!.userId} is authenticated!`);
     return `userId ${payload!.userId} is authenticated!`;
+  }
+
+  @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
+  @UseMiddleware(isAuth)
+  async revokeTokens(@Ctx() ctx: GraphqlContext) {
+    // By adding authentication as middleware, the authentication is performed before the query takes place.
+    // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
+    return await revokeRefreshTokens(ctx);
   }
 
   @Mutation(() => User) // Tell type-graphql that return value is of type User
