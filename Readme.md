@@ -415,6 +415,7 @@ Lets beautify and strengthen TypeScript validation while we're at it...
 ## Revoke tokens for a user (change passord)
 
 Time to add a revoke method in order to invalidate tokens when password is changed:
+
 - add `revokeRefreshTokens` in `src/utils/auth.ts`
 - create (temporary) mutation for testing purposes
 
@@ -422,15 +423,83 @@ Now, refreshToken is invalidated by incrementing tokenVersion in the database on
 
 Notice that the accessToken is still valid until it expires.
 
-
 Wait, can't we revoke the accessTokens as well?
 
 Yes, we can - but it requires a lookup in the database in order to compare tokenversion.
 
 You should ask yourself: Is it worth adding an extra DB User lookup to every single website request?
 
-If you decide that it *is* worth it, here's how it can be done:
+If you decide that it _is_ worth it, here's how it can be done:
+
 - add tokenVersion to the accessToken payload
 - modify `revokeRefreshTokens` to also update the context when invalidation takes place
 - add User lookup to the `isAuth` middleware function - be aware that it changes `isAuth` into an async function
+
+## Confirmation email
+
+This part is based on one of Ben Awad's [tutorials](https://www.youtube.com/watch?v=OP39UioapL8&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=6).
+
+Email confirmation before enabling login, requires:
+
+- confirmation info stored in the database
+- sending an email upon registration
+- an extra check in login that disables login until the email confirmation is done
+- a way to recieve the confirmation and enable login - a link/url with an identifier to confirm the user/email
+
+Email is sent by using [nodemailer](https://www.npmjs.com/package/nodemailer) and the unique identifier is created with [uuid](https://www.npmjs.com/package/uuid)
+
+Install nodemailer and uuid:
+
+```
+$ npm i nodemailer uuid
+$ npm i -D @types/nodemailer @types/uuid
+```
+
+### Confirmation info stored in the database
+
+Create e new DB table, `UserEmailConfirmation`, to store info about confirmation mails sent out. Some email validations will most likely be lost - meaning that some user accounts will not be confirmed.
+
+What would happen if a user registration request is never confirmed and never cleaned up? It would block that email from being used in the future - also, it would be a waste of 'dead space' carrying around useless logins.
+
+Adding a timestamp to the database enables a way of cleaning up invalid user requests. A registration request should be confirmed within a short period of time - let's say 1-2 days. After that, a cleanup procedure should remove any unused registration attempts.
+
+A basic `UserEmailConfirmation` table could look like this:
+
+```
+@ObjectType()
+@Entity("UserEmailConfirmations")
+export class UserEmailConfirmation extends BaseEntity {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column()
+  email: string;
+
+  @Field()
+  @Column("varchar", { unique: true, length: 36 })
+  uuid: string;
+
+  @Field()
+  @Column({
+    nullable: false,
+    type: "timestamp",
+    default: () => "DATE_ADD(NOW())",
+  })
+  createdAt: Date;
+}
+```
+
+### Add email confirmation check to `login`
+
+The login mutation already throws a few errors in case email or password is invalid. An extra check is added to verify that email is confirmed, thow an error otherwise.
+
+### Send an email upon registration
+
+`src/utils/sendConfirmationEmail.ts` is created. This is where nodemailer resides, where emails are created and confirmation info is stored in the database.
+
+The `register` mutation calls `sendConfirmationEmail`. This way, an email is sent before returning the user.
+
+### Recieve the confirmation and enable login
 

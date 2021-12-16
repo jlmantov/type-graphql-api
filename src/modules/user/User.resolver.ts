@@ -18,6 +18,7 @@ import {
 import { hash, verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
+import { sendConfirmationEmail } from "../../utils/sendConfirmationEmail";
 
 /**
  * login returns a token in GraphQL, so we need to let TypeGraphQL know about it - so it becomes an @ObjectType
@@ -72,6 +73,10 @@ export class UserResolver {
     const validated = await verify(password, user.password);
     if (!validated) {
       throw new Error("Invalid username or password!");
+    }
+
+    if (!user.confirmed) {
+      throw new Error("Email needs to be confirmed in order to enable login!");
     }
 
     // login successful, no create 1. refresh token and 2. access token
@@ -134,6 +139,9 @@ export class UserResolver {
     if (!user) {
       throw new Error("Error: unable to create user!"); // some unhandled error - net, connection, DB, disc whatever ...
     }
+
+    // make user confirm email before login is enabled
+    await sendConfirmationEmail(email);
 
     return user;
   }
