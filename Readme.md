@@ -1,11 +1,29 @@
 # TypeGraphQL API - with Email authentication and JWT authorization
 
+## Content
+- [Motivation](./#motivation)
+- [Technologies](https://github.com/jlmantov/type-graphql-api#technologies)
+- [Setup GraphQL server using TypeGraphQL and TypeORM](https://github.com/jlmantov/type-graphql-api#setup-graphql-server-using-typegraphql-and-typeorm)
+- [Setup a local Docker MySQL database](https://github.com/jlmantov/type-graphql-api#setup-a-local-docker-mysql-database)
+- [Setup GraphQL server](https://github.com/jlmantov/type-graphql-api#setup-graphql-server)
+- [Password encryption](https://github.com/jlmantov/type-graphql-api#password-encryption)
+- [Create User mutation in GraphQL](https://github.com/jlmantov/type-graphql-api#create-user-mutation-in-graphql)
+- [Login and create access token + refresh token](https://github.com/jlmantov/type-graphql-api#login-and-create-access-token--refresh-token)
+- [Authenticated mutations and queries](https://github.com/jlmantov/type-graphql-api#authenticated-mutations-and-queries)
+- [Refresh the accessToken](https://github.com/jlmantov/type-graphql-api#refresh-the-accesstoken)
+- [Revoke tokens for a user (change password)](https://github.com/jlmantov/type-graphql-api#revoke-tokens-for-a-user-change-password)
+- [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
+
+
+## Motivation
+
 This Readme was never intended to be a stand-alone step by step walk-through.
 It would be more precise to call it sort of a 'memory map' - a guide to reproduce the reading path (if needed) and a way of organizing the project's different steps - from beginning to a fully functional API.
 
 If this is helpful to others - please, be my guest. My personal mindset includes curiosity and a playful attitude. If something seems unclear, I suggest looking into the [commit-history](https://github.com/jlmantov/type-graphql-api/commits/main) and following the file changes along the way ... and of course: additional reading in general.
 
 Based on a mix of [tutorials and articles](./docs/links.md)
+
 
 ## Technologies
 
@@ -72,7 +90,7 @@ Optionally run `tsc --init` or consult [Stack Overflow](https://stackoverflow.co
 
 I chose this [setup](https://github.com/jlmantov/type-graphql-api/blob/main/tsconfig.json) (same as Ben Awad's tutorial).
 
-### Setup a local Docker MySQL database
+## Setup a local Docker MySQL database
 
 (NB: no need to do this, almost any database connection will do - pick your favourite. :)
 
@@ -139,7 +157,7 @@ Here you can setup and run express/koa/any other framework.
 
 OK, the database is up and running, TypeORM is connecting to it and provides data .... let's move on.
 
-### Setup GraphQL server
+## Setup GraphQL server
 
 ```
 $ npm install graphql express apollo-server-express
@@ -195,7 +213,7 @@ The response should now be:
 }
 ```
 
-### Password encryption
+## Password encryption
 
 Password encryption is isolated to a single file in order to be able to change it easily
 
@@ -220,7 +238,7 @@ The end result is 2 methods providing me with what I need
 1. hash: (pwd: string) => Promise&lt;CryptoResponse&gt;
 2. verify: (hashedSalt: string, hashedPwd: string, pwd: string) => Promise&lt;boolean&gt;
 
-### Create User mutation in GraphQL
+## Create User mutation in GraphQL
 
 Modify `src/entity/User.ts`
 
