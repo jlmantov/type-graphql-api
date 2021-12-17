@@ -62,7 +62,7 @@ I'd still like to know the alternatives and their consequences - in order to cho
 Let's face it, a session table in a database is also a useful option - as an alternative to introducing Redis. Many solutions work really well this way (added complexity comes with a cost).
 
 
-Considering the simplicity of JWT from a server architecture perspective (no session storage),
+Considering that JWT saves me from session storage, I choose to carry on with JWT.
 
 
 
