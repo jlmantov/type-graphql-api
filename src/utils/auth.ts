@@ -128,13 +128,13 @@ export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
 export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<Boolean> => {
   const result = await getConnection()
     .getRepository(User)
-    .increment({ id: parseInt(ctx.payload!.userId) }, "tokenVersion", 1);
+    .increment({ id: parseInt(ctx.payload!.userId, 10) }, "tokenVersion", 1);
   if (result.affected !== 1) {
     return false;
   }
 
   // In order to avoid loking up user on every isAuth request, increment context directly
-  ctx.payload!.v = parseInt(ctx.payload!.v.toString()) + 1;
+  ctx.payload!.v = parseInt(ctx.payload!.v.toString(), 10) + 1;
 
   console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
   return true;
