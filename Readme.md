@@ -503,3 +503,13 @@ The `register` mutation calls `sendConfirmationEmail`. This way, an email is sen
 
 ### Recieve the confirmation and enable login
 
+Confirming a new user email should always be a manual event, done by a person - not an automated integration API. Also, email confirmation is (hopefully) used rarely, compared to *day to day* activities.
+
+Are there any good reasons to add a `confirmEmail` mutation? Well, the only thing I can come up with, is if I create an email client myself, that use this API.
+
+Please let me know, if you can provide solid arguments for adding email confirmation to GraphQL?
+
+Right now, I choose to follow Ben Awad's [tutorial](https://www.youtube.com/watch?v=OP39UioapL8&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=6) and add a `confirmEmail` mutation - which, by the way, makes testing a lot easier ... I would propably choose otherwise in real world scenarios.
+
+
+

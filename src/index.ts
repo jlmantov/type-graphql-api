@@ -26,11 +26,11 @@ import { createSchema } from "./utils/createSchema";
     context: ({ req, res }) => ({ req, res }),
   });
 
-  // add the GaphQL stuff as middleware to the express server
+  // add the express server as middleware to the GaphQL server - meaning that express is served first
   await graphqlServer.start();
   await graphqlServer.applyMiddleware({ app });
 
-  const port = 4000;
+  const port = process.env.PORT!;
   app.listen(port, () => {
     console.log(`Express server started at port ${port}`);
   });

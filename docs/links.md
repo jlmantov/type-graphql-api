@@ -20,6 +20,7 @@ I have also thought about [how to organize and store accounts, emails and person
 - [Introduction to GraphQL](https://graphql.org/learn/)
 - [TypeGraphQL Docs](https://typegraphql.com/docs/introduction.html)
 - [TypeORM](https://typeorm.io/#/)
+- [Building a CRUD-backend with GraphQL, TypeScript and TypeGraphQL](https://dev.to/lastnameswayne/building-a-crud-backend-with-graphql-typescript-and-typegraphql-4h71)
 
 - [node-argon2](https://www.npmjs.com/package/argon2)
 - [node-argon2 Options](https://github.com/ranisalt/node-argon2/wiki/Options)

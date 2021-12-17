@@ -9,6 +9,7 @@ import {
   UseMiddleware
 } from "type-graphql";
 import { User } from "../../entity/User";
+import { UserEmailConfirmation } from "../../entity/UserEmailConfirmation";
 import {
   createAccessToken,
   createRefreshToken,
@@ -144,5 +145,29 @@ export class UserResolver {
     await sendConfirmationEmail(email);
 
     return user;
+  }
+
+  @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
+  async confirmEmail(@Arg("uuid") uuid: string): Promise<boolean> {
+    // tell TypeScript that confirmEmail returns a promise of type boolean
+
+    const userConfirmation = await UserEmailConfirmation.findOne({ where: { uuid } });
+    console.log("userConfirmation", userConfirmation);
+    if (userConfirmation === undefined) {
+      return false;
+    }
+
+    const user = await User.findOne({ where: { email: userConfirmation.email } });
+    console.log("user", user);
+    if (!user) {
+      return false;
+    }
+
+    const success = await User.update(user.id, { confirmed: true });
+    if (success.affected === 1) {
+      // only cleanup if user login was actually enabled
+      UserEmailConfirmation.delete(userConfirmation.id);
+    }
+    return true;
   }
 }
