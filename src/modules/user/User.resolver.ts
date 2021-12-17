@@ -8,6 +8,7 @@ import {
   Resolver,
   UseMiddleware
 } from "type-graphql";
+import { getConnection } from "typeorm";
 import { User } from "../../entity/User";
 import { UserEmailConfirmation } from "../../entity/UserEmailConfirmation";
 import {
@@ -168,6 +169,40 @@ export class UserResolver {
       // only cleanup if user login was actually enabled
       UserEmailConfirmation.delete(userConfirmation.id);
     }
+    return true;
+  }
+
+  @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
+  async unconfirmedUserCleanup(): Promise<boolean> {
+    // tell TypeScript that unconfirmedUserCleanup returns a promise of type boolean
+
+    let timeout = new Date().getTime(); // current timestamp - ms since '01-01-1970 00:00:00.000 UTC'
+    timeout = timeout - 1000 * 60 * 60 * 24 * 2; // two days: 1000 ms * 60 s * 60 m * 24 h * 2 days
+    timeout = Math.floor(timeout / 1000); // mysql requires timestamp in seconds
+
+    // https://typeorm.io/#select-query-builder/how-to-create-and-use-a-querybuilder
+    const unconfirmedUsers: UserEmailConfirmation[] = await getConnection()
+      .createQueryBuilder()
+      .select(["id", "email", "uuid", "createdAt"])
+      .from(UserEmailConfirmation, "UserEmailConfirmations")
+      .where("createdAt < FROM_UNIXTIME(:timeout)", { timeout: timeout })
+      .execute();
+
+    if (unconfirmedUsers === undefined || unconfirmedUsers.length === 0) {
+      return false;
+    }
+
+    unconfirmedUsers.map(async (unconfirmed: UserEmailConfirmation) => {
+      // cleanup table Users
+      const user = await User.findOne({ where: { email: unconfirmed.email, confirmed: false } });
+      if (user) {
+        User.delete(user.id);
+      }
+
+      // cleanup table UserEmailConfirmation
+      UserEmailConfirmation.delete(unconfirmed.id);
+    });
+
     return true;
   }
 }
