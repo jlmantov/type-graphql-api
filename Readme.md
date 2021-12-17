@@ -412,7 +412,7 @@ One tiny addition: Now, the refreshToken cookie is going to be set 2 different p
 The intensions of isolating JWT to a single file nearly fell apart, a `jsonwebtoken.verify` call snug into `src/utils/isAuth.ts`.
 Lets beautify and strengthen TypeScript validation while we're at it...
 
-## Revoke tokens for a user (change passord)
+## Revoke tokens for a user (change password)
 
 Time to add a revoke method in order to invalidate tokens when password is changed:
 
@@ -457,7 +457,7 @@ $ npm i -D @types/nodemailer @types/uuid
 
 ### Confirmation info stored in the database
 
-Create e new DB table, `UserEmailConfirmation`, to store info about confirmation mails sent out. Some email validations will most likely be lost - meaning that some user accounts will not be confirmed.
+Create a new DB table, `UserEmailConfirmation`, to store info about sent confirmation mails. Some email validations will most likely be lost - meaning that some user accounts will not be confirmed.
 
 What would happen if a user registration request is never confirmed and never cleaned up? It would block that email from being used in the future - also, it would be a waste of 'dead space' carrying around useless logins.
 
