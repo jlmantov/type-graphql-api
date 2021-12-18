@@ -1,6 +1,8 @@
+import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { getConnection } from "typeorm";
 import { v4 } from "uuid";
+import { User } from "../entity/User";
 import { UserEmailConfirmation } from "../entity/UserEmailConfirmation";
 
 /**
@@ -41,7 +43,7 @@ export const sendConfirmationEmail = async (email: string) => {
   // Preview only available when sending through an Ethereal account
   console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
-}
+};
 
 /**
  * Create a new UserEmailConfirmation entity in the database and return the
@@ -64,4 +66,35 @@ const createConfirmationUrl = async (email: string) => {
   }
 
   return `http://localhost:4000/user/confirm/${uuid}`;
+};
+
+/**
+ * Verify uuid from request url, enable login and cleanup email confirmation
+ * @param http request - url parameter is used as input
+ * @param http status - 200 on success, 400 on error
+ * @param http response - succes JSON: { OK: true } - error JSON: { error: 'message' }
+ * @returns http response - true when user is confirmed, false otherwise
+ */
+export const confirmEmail = async (req: Request, res: Response) => {
+  console.log("req.params", JSON.stringify(req.params));
+
+  // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
+  const userConfirmation = await UserEmailConfirmation.findOne({ where: { uuid: req.params.id } });
+  console.log("userConfirmation", userConfirmation);
+  if (userConfirmation === undefined) {
+    res.status(400).json({ error: "Expired or unknown id, please register again!" });
+  } else {
+    const user = await User.findOne({ where: { email: userConfirmation.email } });
+    console.log("user", user);
+    if (!user) {
+      res.status(400).json({ error: "Not found!" });
+    } else {
+      const success = await User.update(user.id, { confirmed: true });
+      if (success.affected === 1) {
+        // only cleanup if user login was actually enabled
+        await UserEmailConfirmation.delete(userConfirmation.id);
+      }
+      res.status(200).json({ ok: true });
+    }
+  }
 };

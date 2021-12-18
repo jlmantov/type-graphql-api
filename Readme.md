@@ -527,7 +527,15 @@ Are there any good reasons to add a `confirmEmail` mutation? Well, the only thin
 
 Please let me know, if you can provide solid arguments for adding email confirmation to GraphQL?
 
-Right now, I choose to follow Ben Awad's [tutorial](https://www.youtube.com/watch?v=OP39UioapL8&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=6) and add a `confirmEmail` mutation - which, by the way, makes testing a lot easier ... I would propably choose otherwise in real world scenarios.
+Right now, I choose to follow Ben Awad's [tutorial](https://www.youtube.com/watch?v=OP39UioapL8&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=6) and add a `confirmEmail` mutation - which, by the way, makes manual testing a lot easier ... I would propably choose otherwise in real world scenarios.
+
+
+### Confirmation Email endpoint
+
+Endpoint for receiving emails is going to be: http://localhost:4000/users/confirm/:id
+
+- URL endpoint is added to `src/index.ts`
+- Method implementation og `confirmEmail` is placed beside the other email handling ... this might be subject to refactoring along the way.
 
 
 

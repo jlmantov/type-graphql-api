@@ -27,6 +27,9 @@ I have also thought about [how to organize and store accounts, emails and person
 - [Building a password hasher in Node.js](https://blog.logrocket.com/building-a-password-hasher-in-node-js/)
 - [tabnine: How to use hash function in argon2](https://www.tabnine.com/code/javascript/functions/argon2/hash)
 
+- [Express](https://expressjs.com/)
+- [Apollo Server](https://www.apollographql.com/docs/apollo-server/integrations/middleware/#apollo-server-express)
+
 - [body-parser](https://www.npmjs.com/package/body-parser)
 - [graphql-tag](https://www.npmjs.com/package/graphql-tag)
 

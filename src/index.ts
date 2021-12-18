@@ -7,12 +7,14 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { handleJwtRefreshTokenRequest } from "./utils/auth";
 import { createSchema } from "./utils/createSchema";
+import { confirmEmail } from "./utils/sendConfirmationEmail";
 
-// lambda function calling itself immediately
+// lambda function calling itself immediately - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
 (async () => {
   const app = express();
   app.use(cookieParser());
   app.post("/renew_accesstoken", async (req, res) => handleJwtRefreshTokenRequest(req, res));
+  app.get("/user/confirm/:id", async (req, res) => confirmEmail(req, res));
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
   await createConnection(); // create database connection.
