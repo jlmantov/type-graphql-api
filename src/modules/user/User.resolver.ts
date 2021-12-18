@@ -1,38 +1,18 @@
-import {
-  Arg,
-  Ctx,
-  Field,
-  Mutation,
-  ObjectType,
-  Query,
-  Resolver,
-  UseMiddleware
-} from "type-graphql";
+import { Arg, Ctx, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import { getConnection } from "typeorm";
 import { User } from "../../entity/User";
 import { UserEmailConfirmation } from "../../entity/UserEmailConfirmation";
-import {
-  createAccessToken,
-  createRefreshToken,
-  revokeRefreshTokens,
-  sendRefreshToken
-} from "../../utils/auth";
-import { hash, verify } from "../../utils/crypto";
+import { revokeRefreshTokens } from "../../utils/auth";
+import { verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
-import { sendConfirmationEmail } from "../../utils/sendConfirmationEmail";
-
-/**
- * login returns a token in GraphQL, so we need to let TypeGraphQL know about it - so it becomes an @ObjectType
- */
-@ObjectType()
-class LoginResponse {
-  @Field()
-  accessToken: string;
-}
 
 @Resolver()
 export class UserResolver {
+  /**
+   * Temporarily keep this - for manual testing purposes
+   * @returns
+   */
   @Query(() => [User]) // Tell type-graphql that return value is an array of type User
   @UseMiddleware(isAuth)
   users(): Promise<User[]> {
@@ -40,6 +20,12 @@ export class UserResolver {
     return User.find();
   }
 
+  /**
+   * Temporarily keep this - for manual testing purposes
+   * @param email
+   * @param password
+   * @returns
+   */
   @Query(() => User) // Tell type-graphql that return value is of type User
   async getUser(
     @Arg("email") email: string,
@@ -59,39 +45,11 @@ export class UserResolver {
     return user;
   }
 
-  @Query(() => LoginResponse) // Tell type-graphql that return value is of type LoginResponse
-  async login(
-    @Arg("email") email: string,
-    @Arg("password") password: string,
-    @Ctx() ctx: GraphqlContext
-  ): Promise<LoginResponse> {
-    // tell TypeScript that login returns a promise of type LoginResponse
-    const user = await User.findOne({ where: { email } });
-
-    if (!user) {
-      throw new Error("Invalid email or password!");
-    }
-
-    const validated = await verify(password, user.password);
-    if (!validated) {
-      throw new Error("Invalid username or password!");
-    }
-
-    if (!user.confirmed) {
-      throw new Error("Email needs to be confirmed in order to enable login!");
-    }
-
-    // login successful, no create 1. refresh token and 2. access token
-    const refreshToken = await createRefreshToken(user);
-    sendRefreshToken(ctx.res, refreshToken);
-
-    // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
-    const accessToken = await createAccessToken(user);
-    return {
-      accessToken,
-    };
-  }
-
+  /**
+   * Temporarily keep this - for manual testing purposes
+   * @param param0
+   * @returns
+   */
   @Query(() => String) // Tell type-graphql that return value is of type String
   @UseMiddleware(isAuth)
   isAuthenticated(@Ctx() { payload }: GraphqlContext): String {
@@ -103,6 +61,12 @@ export class UserResolver {
     return `userId ${payload!.userId} is authenticated!`;
   }
 
+  /**
+   * Invalidate refreshTokens <=> invalidate current sessions ... relevant for resetting/changing password
+   * This should be refactored into two different mutations: resetPassword (using email) AND changePassword
+   * @param ctx
+   * @returns
+   */
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
   @UseMiddleware(isAuth)
   async revokeTokens(@Ctx() ctx: GraphqlContext) {
@@ -111,43 +75,11 @@ export class UserResolver {
     return await revokeRefreshTokens(ctx);
   }
 
-  @Mutation(() => User) // Tell type-graphql that return value is of type User
-  async register(
-    @Arg("firstname") firstName: string,
-    @Arg("lastname") lastName: string,
-    @Arg("email") email: string,
-    @Arg("password") password: string
-  ): Promise<User | null> {
-    // tell TypeScript that getUser returns a promise of type User or null
-
-    // first of all, find out if email is already in the database
-    const registeredUser = await User.findOne({ where: { email } });
-    // console.log("registeredUser", registeredUser);
-    if (registeredUser) {
-      throw new Error("Error: user already exist!"); // avoid duplicates
-    }
-
-    // encrypt the password (keep it a secret)
-    const hashedPassword = await hash(password);
-    // console.log("hashedPassword", hashedPassword);
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-    }).save();
-
-    if (!user) {
-      throw new Error("Error: unable to create user!"); // some unhandled error - net, connection, DB, disc whatever ...
-    }
-
-    // make user confirm email before login is enabled
-    await sendConfirmationEmail(email);
-
-    return user;
-  }
-
+  /**
+   * Temporarily keep this - for manual testing purposes
+   * @param uuid
+   * @returns
+   */
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
   async confirmEmail(@Arg("uuid") uuid: string): Promise<boolean> {
     // tell TypeScript that confirmEmail returns a promise of type boolean

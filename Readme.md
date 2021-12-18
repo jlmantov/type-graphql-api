@@ -538,4 +538,29 @@ Endpoint for receiving emails is going to be: http://localhost:4000/users/confir
 - Method implementation og `confirmEmail` is placed beside the other email handling ... this might be subject to refactoring along the way.
 
 
+## Reorganize TypeGaphQL Resolvers
+
+`src/modules/user/User.resolver.ts` is bloated by now.
+
+Testing will be added soon. Developing different tasks in parallel might cause messy version control. This project needs reorganizing to maintain order.
+
+Requests/mutations that positively goes into production, are extracted into their own resolvers.
+
+Queries/mutations:
+- users() - Temporary dev/test
+- getUser(email, password) - might be used in future code. Considered temporary dev/test until then
+- login(email, password, context) - ready
+- isAuthenticated(context) - Temporary dev/test
+- revokeTokens(context) - relevant for reset/change password, refactor into two different mutations: `resetPassword` (using email) and `changePassword`
+- register(firstname, lastname, email, password) - ready
+- confirmEmail(uuid) - endpoint outside API
+- unconfirmedUserCleanup() - not a customer task. why put this in an API??
+
+Most of this is just dev/test junk. Only `register` and `login` are ready to go into their own resolvers.
+
+- `src/modules/user/Login.resolver.ts`
+- `src/modules/user/Register.resolver.ts`
+- `src/modules/user/User.resolver.ts`
+
+`src/utils/createSchema.ts` is updated accordingly.
 
