@@ -7,9 +7,28 @@ import { GraphqlContext } from "./GraphqlContext";
 export interface JwtAccessPayload {
   userId: string;
   v: number;
+  iat: number;
+  exp: number;
 }
 
 /**
+ * Token is available as hidden Form field in 'Reset password' html, so timespan is very limited
+ * @param user the user who attempts to login
+ * @returns JWT accessToken
+ */
+export const resetPasswordToken = async (user: User) => {
+  const accessPayload = { userId: user.id, v: user.tokenVersion }; // typesafety - could be: parseInt(user.id.toString())
+  const accessOptions: SignOptions = {
+    header: { alg: "HS384", typ: "JWT" },
+    expiresIn: "3m",
+    algorithm: "HS384",
+  };
+  // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
+  return await jwt.sign(accessPayload, process.env.JWT_ACCESS_TOKEN_SECRET!, accessOptions);
+};
+
+/**
+ * Token paylod is readable (although Base64 encoded), name the parameters so nobody know what is going on...
  * @param user the user who attempts to login
  * @returns JWT accessToken
  */
@@ -25,6 +44,7 @@ export const createAccessToken = async (user: User) => {
 };
 
 /**
+ * Token paylod is readable (although Base64 encoded), name the parameters so nobody know what is going on...
  * @param user the user who attempts to login
  * @returns JWT refreshToken
  */
@@ -123,9 +143,9 @@ export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
 /**
  * By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
  * @param ctx
- * @returns Promise of type Boolean - true if increment on db tokenVersion  affected 1 row, false otherwise
+ * @returns Promise of type boolean - true if increment on db tokenVersion  affected 1 row, false otherwise
  */
-export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<Boolean> => {
+export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean> => {
   const result = await getConnection()
     .getRepository(User)
     .increment({ id: parseInt(ctx.payload!.userId, 10) }, "tokenVersion", 1);
@@ -143,30 +163,3 @@ export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<Boolean>
 export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;
 export const jwtRefreshSecretKey = process.env.JWT_REFRESH_TOKEN_SECRET!;
 
-// JSON Web Token secret value related to the server/domain. Used to validate requests
-// this should be protected and kept in a .env file - like DB logins etc.
-// export const jwtAccessSecretKey =
-//   "hIoeVrjXoNF357s4s8Dh4hYpkgiueYkQalsMFP25WSLEQCvOIHt5SkwBxT71zJSOh3aXzbGUlnAESfi3aM6iRkvQNsXDpv8eQfkB" +
-//   "3NBt354EfmJMnsLDJPNPgEWp9OVLxcCsb9yFWPAOiJIUzM4NCIsInR5cCI6IkpXVCJ9eyJ1c2VySWQiOjExLCJpYXQiOjE2Mzk1O" +
-//   "DE5NDAsImV4cCI6MTYzOTU4Mjg0MH0zksImV4cCI6MTYzOTU4Mjg3OX0MiNDytAoS6GPRdj5Wgq7JDdtr5AT8fSE5GaNmw5v8h4r" +
-//   "CEsJVSvrSGYh9Z7vCjDpjExLCJpYXQiOjE2Mzk1ODIwNDcsImV4cCI6MTYzOTU4Mjk0N30DQfQ01Z0bkWRBHcCYNlFTb0tagTZQ7" +
-//   "qnTgUDppbRsHGZ9KR8VbXUJYfZl8z2hdPB54NP2RcVUt2ws82C8bNQ6aqeYZQtda652wlvFyDP3QV2BGuzNoVduFnZaYUy9wAefn" +
-//   "0X2Ck7STBD6w8XISIjkqDM4cVCH1fGWyervRgtAEaKT77nyeC6NDG1B1gzOu6GXYrFZGtGgfBqaVx9uYDZonekE2LUED3B7lD40S" +
-//   "YsNYi1f8bfa6eMJAcqw75Czc2YhKzg9uuTaItUKv3x28U4ygaz1lrN0lPKz3R2ipjXvQ297oPnTRYtBr7fHD5UvSMswJ9ZF3VnN2" +
-//   "ldXo8i0eNEc4De8nGIwW1kPoad2GlMWrem563W0cZh8O2VuhoMwYqRr6UMaPhFtqmVmsoq3d5ng1yDF3URcgURJ9HE5rJ7Iv9sUW" +
-//   "Ly5TVeih05MRBDzp5PUO11lcCgO7Rg4Z9rq5bzwFysRQiTHygxXAXNZrCMXDp6BkRKSeUX7fkk3A5d83kdke1y9dRR1SxXe6fEge" +
-//   "YDc8BLVJQcn3TxbaEMyW58sp1YqlhD279JF9ROpdnNChIB3Cf4OWGibRYmoZzdG4VBSy5iQfWrdUCf7wehSeSwPGAxB6WwvRnwO2" +
-//   "WebArTsiRd6L8Nbu0XA4XofB"; // 1024 random characters
-
-// export const jwtRefreshSecretKey =
-//   "3NBt354EfmJMnsLDJPNPgEWp9OVLxcCsb9yFWPAOiJIUzM4NCIsInR5cCI6IkpXVCJ9eyJ1c2VySWQiOjExLCJpYXQiOjE2Mzk1O" +
-//   "hIoeVrjXoNF357s4s8Dh4hYpkgiueYkQalsMFP25WSLEQCvOIHt5SkwBxT71zJSOh3aXzbGUlnAESfi3aM6iRkvQNsXDpv8eQfkB" +
-//   "DE5NDAsImV4cCI6MTYzOTU4Mjg0MH0zksImV4cCI6MTYzOTU4Mjg3OX0MiNDytAoS6GPRdj5Wgq7JDdtr5AT8fSE5GaNmw5v8h4r" +
-//   "CEsJVSvrSGYh9Z7vCjDpjExLCJpYXQiOjE2Mzk1ODIwNDcsImV4cCI6MTYzOTU4Mjk0N30DQfQ01Z0bkWRBHcCYNlFTb0tagTZQ7" +
-//   "qnTgUDppbRsHGZ9KR8VbXUJYfZl8z2hdPB54NP2RcVUt2ws82C8bNQ6aqeYZQtda652wlvFyDP3QV2BGuzNoVduFnZaYUy9wAefn" +
-//   "0X2Ck7STBD6w8XISIjkqDM4cVCH1fGWyervRgtAEaKT77nyeC6NDG1B1gzOu6GXYrFZGtGgfBqaVx9uYDZonekE2LUED3B7lD40S" +
-//   "YsNYi1f8bfa6eMJAcqw75Czc2YhKzg9uuTaItUKv3x28U4ygaz1lrN0lPKz3R2ipjXvQ297oPnTRYtBr7fHD5UvSMswJ9ZF3VnN2" +
-//   "ldXo8i0eNEc4De8nGIwW1kPoad2GlMWrem563W0cZh8O2VuhoMwYqRr6UMaPhFtqmVmsoq3d5ng1yDF3URcgURJ9HE5rJ7Iv9sUW" +
-//   "Ly5TVeih05MRBDzp5PUO11lcCgO7Rg4Z9rq5bzwFysRQiTHygxXAXNZrCMXDp6BkRKSeUX7fkk3A5d83kdke1y9dRR1SxXe6fEge" +
-//   "YDc8BLVJQcn3TxbaEMyW58sp1YqlhD279JF9ROpdnNChIB3Cf4OWGibRYmoZzdG4VBSy5iQfWrdUCf7wehSeSwPGAxB6WwvRnwO2" +
-//   "WebArTsiRd6L8Nbu0XA4XofB"; // 1024 random characters
