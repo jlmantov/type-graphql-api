@@ -13,6 +13,8 @@
 - [Refresh the accessToken](https://github.com/jlmantov/type-graphql-api#refresh-the-accesstoken)
 - [Revoke tokens for a user (change password)](https://github.com/jlmantov/type-graphql-api#revoke-tokens-for-a-user-change-password)
 - [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
+- [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
+- [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
 
 
 ## Motivation
