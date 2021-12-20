@@ -164,7 +164,7 @@ $ npm install graphql express apollo-server-express
 $ npm install --save-dev @types/express
 ```
 
-1. Modify index.ts - remove default stuff and add an express server, check if the server responds on port 4000
+1. Modify index.ts - remove default stuff and add an express server, check if the server responds to the port specified in `.env`
 
 2. Now, let's get Apllo Server started and GraphQL responding...
 
@@ -532,7 +532,7 @@ Right now, I choose to follow Ben Awad's [tutorial](https://www.youtube.com/watc
 
 ### Confirmation Email endpoint
 
-Endpoint for receiving emails is going to be: http://localhost:4000/users/confirm/:id
+Endpoint for receiving emails is going to be: http://{proces.env.DOMAIN}:{proces.env.PORT}/users/confirm/:id
 
 - URL endpoint is added to `src/index.ts`
 - Method implementation og `confirmEmail` is placed beside the other email handling ... this might be subject to refactoring along the way.
@@ -563,4 +563,53 @@ Most of this is just dev/test junk. Only `register` and `login` are ready to go 
 - `src/modules/user/User.resolver.ts`
 
 `src/utils/createSchema.ts` is updated accordingly.
+
+## Reset Password
+
+I believe resetting a password should be a fairly simple process-flow from the user's perspective:
+- Push some kind of 'button'
+- Type in new password (twice) and press 'Update' ... and voila, the password is updated!
+- Redirect to login-/landing page when done
+
+Resetting password is where I would expect hackers to search for vulnerabilities - I personally want to make this as safe as possible:
+- involve user email in order to protect against hijacking
+- reduce *window of opportunity* to a short period of time
+
+That makes my process flow look like this:
+1. Push some kind of 'button'
+2. receive an email with a link that only works for a short period of time
+3. activate link from email
+4. type in new password (twice) and press the 'Update' button ... and voila, the password is updated!
+6. redirect to login-/landing page when done
+
+This *Reset Password* endpoint is not just *any* new endpoint, it has some extra restrictions:
+- it is unique to a specific user/email
+- it presents a password form to the user
+- it has a timeout - meaning that the form submit must include a JWT token
+
+Several tasks line up already.
+
+
+### Multipe kinds of user emails - refactor to handle different kinds of email
+- rename DB table `UserEmailConfirmations` to something more generic: `userEmail`
+- add emailtype to `userEmail` - the field 'reason' is introduced
+- rename `sendConfirmationEmail.ts` to something more generic: `src/utils/sendEmail.ts`
+- refactor `src/utils/sendEmail.ts` to handle several kinds of tasks
+
+
+### New process-flow
+- add new kind of **resetPasswordToken** with expiration time: 3 minutes
+- add **resetPasswordEmail** to `src/utils/sendEmail.ts`
+- new TypeGraphQL resolver to initiate *Reset Password* flow: `src/modules/user/ResetPassword.resolver.ts`
+- add GET endpoint to provide user with *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
+  - a new resetPasswordToken is provided and added to page
+  - password validation added to form (for now, simply that the two typed in passwords are the same)
+  - form submit has 'Authorization' header with resetPasswordToken
+- add POST endpoint to handle user response from *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
+  - url uuid is used to identify userEmail in DB
+  - token is used to verify timespan
+  - token is used to lookup userId (cross-referencing uuid and token to maximize security)
+- new **verifyPasswordReset** to update password
+- redirect to login/lading page on success
+
 
