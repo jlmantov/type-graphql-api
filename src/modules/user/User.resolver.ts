@@ -1,7 +1,7 @@
 import { Arg, Ctx, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import { getConnection } from "typeorm";
 import { User } from "../../entity/User";
-import { UserEmailConfirmation } from "../../entity/UserEmailConfirmation";
+import { UserEmail } from "../../entity/UserEmail";
 import { revokeRefreshTokens } from "../../utils/auth";
 import { verify } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
@@ -84,7 +84,7 @@ export class UserResolver {
   async confirmEmail(@Arg("uuid") uuid: string): Promise<boolean> {
     // tell TypeScript that confirmEmail returns a promise of type boolean
 
-    const userConfirmation = await UserEmailConfirmation.findOne({ where: { uuid } });
+    const userConfirmation = await UserEmail.findOne({ where: { uuid } });
     console.log("userConfirmation", userConfirmation);
     if (userConfirmation === undefined) {
       return false;
@@ -99,13 +99,13 @@ export class UserResolver {
     const success = await User.update(user.id, { confirmed: true });
     if (success.affected === 1) {
       // only cleanup if user login was actually enabled
-      UserEmailConfirmation.delete(userConfirmation.id);
+      UserEmail.delete(userConfirmation.id);
     }
     return true;
   }
 
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
-  async unconfirmedUserCleanup(): Promise<boolean> {
+  async userEmailCleanup(): Promise<boolean> {
     // tell TypeScript that unconfirmedUserCleanup returns a promise of type boolean
 
     let timeout = new Date().getTime(); // current timestamp - ms since '01-01-1970 00:00:00.000 UTC'
@@ -113,26 +113,26 @@ export class UserResolver {
     timeout = Math.floor(timeout / 1000); // mysql requires timestamp in seconds
 
     // https://typeorm.io/#select-query-builder/how-to-create-and-use-a-querybuilder
-    const unconfirmedUsers: UserEmailConfirmation[] = await getConnection()
+    const userEmails: UserEmail[] = await getConnection()
       .createQueryBuilder()
       .select(["id", "email", "uuid", "createdAt"])
-      .from(UserEmailConfirmation, "UserEmailConfirmations")
+      .from(UserEmail, "UserEmails")
       .where("createdAt < FROM_UNIXTIME(:timeout)", { timeout: timeout })
       .execute();
 
-    if (unconfirmedUsers === undefined || unconfirmedUsers.length === 0) {
+    if (userEmails === undefined || userEmails.length === 0) {
       return false;
     }
 
-    unconfirmedUsers.map(async (unconfirmed: UserEmailConfirmation) => {
+    userEmails.map(async (outdated: UserEmail) => {
       // cleanup table Users
-      const user = await User.findOne({ where: { email: unconfirmed.email, confirmed: false } });
+      const user = await User.findOne({ where: { email: outdated.email, confirmed: false } });
       if (user) {
         User.delete(user.id);
       }
 
-      // cleanup table UserEmailConfirmation
-      UserEmailConfirmation.delete(unconfirmed.id);
+      // cleanup table UserEmails
+      UserEmail.delete(outdated.id);
     });
 
     return true;

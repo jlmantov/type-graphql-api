@@ -8,8 +8,8 @@ import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
  * @Field tells GraphQL which fields is allowed to query for. Notice that the password is left out
  */
 @ObjectType()
-@Entity("UserEmailConfirmations") // tablename specified
-export class UserEmailConfirmation extends BaseEntity {
+@Entity("UserEmails") // tablename specified
+export class UserEmail extends BaseEntity {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,6 +21,10 @@ export class UserEmailConfirmation extends BaseEntity {
   @Field()
   @Column("varchar", { unique: true, length: 36 })
   uuid: string;
+
+  @Field()
+  @Column("varchar")
+  reason: string;
 
   @Field()
   @Column({

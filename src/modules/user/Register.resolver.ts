@@ -1,7 +1,7 @@
 import { Arg, Mutation, Resolver } from "type-graphql";
 import { User } from "../../entity/User";
 import { hash } from "../../utils/crypto";
-import { sendConfirmationEmail } from "../../utils/sendConfirmationEmail";
+import { CONFIRMUSER, sendUserEmail } from "../../utils/sendEmail";
 
 @Resolver()
 export class RegisterResolver {
@@ -37,7 +37,7 @@ export class RegisterResolver {
     }
 
     // make user confirm email before login is enabled
-    await sendConfirmationEmail(email);
+    await sendUserEmail(email, CONFIRMUSER);
 
     return user;
   }

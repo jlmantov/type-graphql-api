@@ -7,14 +7,14 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { handleJwtRefreshTokenRequest } from "./utils/auth";
 import { createSchema } from "./utils/createSchema";
-import { confirmEmail } from "./utils/sendConfirmationEmail";
+import { CONFIRMUSER, confirmUserEmail } from "./utils/sendEmail";
 
 // lambda function calling itself immediately - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
 (async () => {
   const app = express();
   app.use(cookieParser());
   app.post("/renew_accesstoken", async (req, res) => handleJwtRefreshTokenRequest(req, res));
-  app.get("/user/confirm/:id", async (req, res) => confirmEmail(req, res));
+  app.get("/user/" + CONFIRMUSER + "/:id", async (req, res, _next) => confirmUserEmail(req, res));
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
   await createConnection(); // create database connection.
@@ -37,21 +37,3 @@ import { confirmEmail } from "./utils/sendConfirmationEmail";
     console.log(`Express server started at port ${port}`);
   });
 })();
-
-// createConnection().then(async connection => {
-
-//     console.log("Inserting a new user into the database...");
-//     const user = new User();
-//     user.firstName = "Timber";
-//     user.lastName = "Saw";
-//     user.age = 25;
-//     await connection.manager.save(user);
-//     console.log("Saved a new user with id: " + user.id);
-
-//     console.log("Loading users from the database...");
-//     const users = await connection.manager.find(User);
-//     console.log("Loaded users: ", users);
-
-//     console.log("Here you can setup and run express/koa/any other framework.");
-
-// }).catch(error => console.log(error));
