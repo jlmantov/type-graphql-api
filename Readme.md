@@ -613,3 +613,20 @@ Several tasks line up already.
 - redirect to login/lading page on success
 
 
+Creating a user dialog, GET and POST endpoints, with an 'Authorization' header in Form.submit turned out to be more tricky than I expected:
+1. First, I ran into issues on how to set the Authorization header - solution:
+    - create an XMLHttpRequest
+    - send response (password, uuid and token) through that XMLHttpRequest-dialog
+    - redirect page if XMLHttpRequest succeeded
+2. Then I realized that express itself didn't cooporate. Receiving Form content required an extra package:
+    - add [body-parser](https://www.npmjs.com/package/body-parser) as middleware to express
+3. and of course, CORS issues also showed up:
+    - add [cors](https://www.npmjs.com/package/cors) as middleware to express
+
+
+Finally, I got *Reset Password* to follow the wanted flow.
+
+The last step, adding `src/utils/verifyPasswordReset.ts` was *a walk in the park* compared to the http dialog. :)
+
+
+

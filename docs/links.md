@@ -21,6 +21,8 @@ I have also thought about [how to organize and store accounts, emails and person
 - [TypeGraphQL Docs](https://typegraphql.com/docs/introduction.html)
 - [TypeORM](https://typeorm.io/#/)
 - [Building a CRUD-backend with GraphQL, TypeScript and TypeGraphQL](https://dev.to/lastnameswayne/building-a-crud-backend-with-graphql-typescript-and-typegraphql-4h71)
+- [How to use GraphQL with Postman – Postman testing with GraphQL](https://www.apollographql.com/blog/tooling/graphql-ide/how-to-use-graphql-with-postman/)
+- [GraphQL Clients](https://graphql.org/graphql-js/graphql-clients/)
 
 - [node-argon2](https://www.npmjs.com/package/argon2)
 - [node-argon2 Options](https://github.com/ranisalt/node-argon2/wiki/Options)
@@ -29,6 +31,10 @@ I have also thought about [how to organize and store accounts, emails and person
 
 - [Express](https://expressjs.com/)
 - [Apollo Server](https://www.apollographql.com/docs/apollo-server/integrations/middleware/#apollo-server-express)
+- [POST JSON With Bearer Token Authorization Header [JavaScript/AJAX Code]](https://reqbin.com/req/javascript/h4rnefmw/post-json-with-bearer-token-authorization-header)
+- [Cross-Origin Resource Sharing (CORS)](https://web.dev/cross-origin-resource-sharing/)
+- [Making a CORS Request - HTML5 Rocks](https://www.html5rocks.com/en/tutorials/cors//)
+- [Express cors middleware](https://expressjs.com/en/resources/middleware/cors.html)
 
 - [body-parser](https://www.npmjs.com/package/body-parser)
 - [graphql-tag](https://www.npmjs.com/package/graphql-tag)
