@@ -15,6 +15,7 @@
 - [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
 - [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
+- [Automated test - Jest](https://github.com/jlmantov/type-graphql-api#automated-test---jest)
 
 
 ## Motivation
@@ -595,28 +596,28 @@ Several tasks line up already.
 ### Multiple kinds of user emails - refactor to handle different kinds of email
 - rename DB table `UserEmailConfirmations` to something more generic: `userEmail`
 - add emailtype to `userEmail` - the field 'reason' is introduced
-- rename `sendConfirmationEmail.ts` to something more generic: `src/utils/sendEmail.ts`
+- rename `src/utils/sendConfirmationEmail.ts` to something more generic: `src/utils/sendEmail.ts`
 - refactor `src/utils/sendEmail.ts` to handle several kinds of tasks
 
 
 ### New process-flow
-- add new kind of **resetPasswordToken** with expiration time: 3 minutes
+- add **resetPasswordToken** with expiration time: 3 minutes
 - add **resetPasswordEmail** to `src/utils/sendEmail.ts`
 - new TypeGraphQL resolver to initiate *Reset Password* flow: `src/modules/user/ResetPassword.resolver.ts`
 - add GET endpoint to provide user with *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
-  - a new resetPasswordToken is provided and added to page
+  - resetPasswordToken is provided in a new cookie (httpOnly: true)
   - password validation added to form (for now, simply that the two typed in passwords are the same)
-  - form submit has 'Authorization' header with resetPasswordToken
 - add POST endpoint to handle user response from *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
   - url uuid is used to identify userEmail in DB
+  - token (from cookie) is used to identify user in DB.
+  - cross-referencing uuid and token in order to avoid cheating
   - token is used to verify timespan
-  - token is used to lookup userId (cross-referencing uuid and token to maximize security)
 - new **verifyPasswordReset** to update password
 - redirect to login/landing page on success
 
 
-Creating a user dialog, GET and POST endpoints, with an 'Authorization' header in Form.submit turned out to be more tricky than I expected:
-1. First, I ran into issues on how to set the Authorization header - solution:
+Creating a user dialog, GET and POST endpoints with authorization, turned out to be more tricky than I expected:
+1. First, I ran into issues on how to set the authorization - solution:
     - create a cookie with resetToken
     - create an XMLHttpRequest
     - send response (password) through that XMLHttpRequest-dialog
@@ -632,6 +633,10 @@ Creating a user dialog, GET and POST endpoints, with an 'Authorization' header i
 Finally, I got *Reset Password* to follow the wanted flow.
 
 The last step, adding `src/utils/verifyPasswordReset.ts` was *a walk in the park* compared to the http dialog. :)
+
+
+## TO DO: Automated test - Jest
+
 
 
 
