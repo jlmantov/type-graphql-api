@@ -11,7 +11,6 @@ export class ResetPasswordResolver {
 
     // first of all, find out if email is already in the database
     const registeredUser = await User.findOne({ where: { email } });
-    // console.log("registeredUser", registeredUser);
     if (!registeredUser) {
       throw new Error("Error: user not found!");
     }

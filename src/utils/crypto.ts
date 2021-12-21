@@ -52,17 +52,16 @@ export const hash = async (pwd: string): Promise<string> => {
  * @param pwd string password provided by user
  * @returns true/false
  */
-export const verify = async (pwd: string, hashedPwd: string): Promise<boolean> => {
+export const verifyPwd = async (pwd: string, hashedPwd: string): Promise<boolean> => {
   try {
     if (await argon2.verify(params + hashedPwd, pwd)) {
       return true; // password match
     } else {
       return false; // password did not match
     }
-  } catch (err) {
-    console.error(err); // internal failure
-    // return err;
-    return false;
+  } catch (error) {
+    console.error(error); // internal failure
+    throw error;
   }
 };
 

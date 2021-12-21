@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { validate as uuidValidate } from "uuid";
 import { User } from "../entity/User";
 import { UserEmail } from "../entity/UserEmail";
-import { getJwtAccessPayload } from "./auth";
+import { getJwtPayload, JwtResetPayload } from "./auth";
 import { hash } from "./crypto";
 import { RESETPWD } from "./sendEmail";
 
@@ -20,56 +20,79 @@ import { RESETPWD } from "./sendEmail";
 export const verifyPasswordReset = async (req: Request, _res: Response) => {
   let validUUID = false;
   if (!req.params.id) {
-    throw new Error("Invalid input!"); // anonymous error, user might be looking for a weakness
+    // throw new Error("url param missing!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
   //   validate uuid
   const uuid = req.params.id;
   validUUID = uuidValidate(uuid);
   if (!validUUID) {
-    throw new Error("Invalid input!"); // anonymous error, user might be looking for a weakness
+    // throw new Error("Invalid uuid!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
   //   validate POST params existence
-  if (!req.body.pwd || !req.body.token) {
-    throw new Error("Invalid input!"); // anonymous error, user might be looking for a weakness
+  if (!req.body.pwd) {
+    // throw new Error("Passwordmissing!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
+  }
+  if (!req.cookies.roj) {
+    // throw new Error("cookie missing!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
   //   validate token
-  const payload = getJwtAccessPayload(req.body.token);
-  if (!payload.userId || !payload.v) {
-    throw new Error("Expired or invalid token!"); // anonymous error, user might be looking for a weakness
+  let payload: JwtResetPayload | undefined = undefined;
+  let pUserId: string = "";
+  let pTokenVersion: number = -1;
+  try {
+    const token = req.cookies.roj;
+    // resetPayload = { plf: user.id, rnl: user.tokenVersion };
+    payload = getJwtPayload(token) as JwtResetPayload; // verified attribute userId
+    pUserId = payload.plf;
+    pTokenVersion = payload.rnl;
+  } catch (error) {
+    throw error; // propagate possible token verification error from 'deeper layers'
   }
-  console.log("payload.iat", payload.iat);
-  console.log("payload.exp", payload.exp);
+
+  if (!payload.plf || !payload.rnl) {
+    // throw new Error("Invalid token payload!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
+  }
 
   const userEmail = await UserEmail.findOne({ where: { uuid, reason: RESETPWD } });
   if (!userEmail) {
-    throw new Error("Invalid input!"); // anonymous error, user might be looking for a weakness
+    // throw new Error("userEmail not found!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  console.log("userEmail.createdAt", userEmail.createdAt);
   const createdAt = new Date(userEmail.createdAt).getTime() / 1000;
-  console.log("createdAt", createdAt); // 3m = 3*60s = 180s <=> exp = iat + 180
-  if (payload.exp < createdAt + 180) {
-    // timespan outside 'window of opportunity'
-    throw new Error("Expired or invalid token!"); // anonymous error, user might be looking for a weakness
+  const now = Math.floor(Date.now() / 1000);
+  console.log("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 3m = 3*60s = 180s <=> exp = iat + 180
+  if (payload.exp < now) {
+    // throw new Error("Token expired!"); // Too late
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
   const pwd = req.body.pwd;
   const hashedPwd = await hash(pwd);
 
+  // console.log("User.findOne: ", { id: pUserId, email: userEmail.email, tokenVersion: pTokenVersion, confirmed: true });
   const user = await User.findOne({
-    where: { id: payload.userId, email: userEmail.email, tokenVersion: payload.v, confirmed: true },
+    where: {
+      id: pUserId,
+      email: userEmail.email,
+      tokenVersion: pTokenVersion,
+      confirmed: true,
+    },
   });
-  if (!user) {
-    throw new Error("User not found!");
-  }
-
   if (!(user instanceof User)) {
-    throw new Error("User not found!");
+    // throw new Error("User not found!");
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
   const updRes = await User.update(user.id, { password: hashedPwd });
   if (updRes.affected === 1) {
+    console.log("Password updated on user: ", JSON.stringify(user)); // 3m = 3*60s = 180s <=> exp = iat + 180
     UserEmail.delete(userEmail.id); // only cleanup if password was actually enabled
   }
   return !!updRes.affected; // true if more than zero rows were affected by the update

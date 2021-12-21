@@ -3,8 +3,8 @@ import nodemailer from "nodemailer";
 import { v4 } from "uuid";
 import { User } from "../entity/User";
 import { UserEmail } from "../entity/UserEmail";
-import { resetPasswordToken } from "./auth";
-import { resetPasswordForm } from "./resetPasswordForm";
+import { createResetPasswordToken } from "./auth";
+import { resetPasswordHtml } from "./resetPasswordForm";
 
 export const CONFIRMUSER = "confirm";
 export const RESETPWD = "resetpwd";
@@ -17,18 +17,14 @@ export const RESETPWD = "resetpwd";
  * @returns http response - true when user is confirmed, false otherwise
  */
 export const confirmUserEmail = async (req: Request, res: Response) => {
-  console.log("req.params", JSON.stringify(req.params));
-
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
   const userConfirmation = await UserEmail.findOne({
     where: { uuid: req.params.id, reason: CONFIRMUSER },
   });
-  console.log("userConfirmation", userConfirmation);
   if (userConfirmation === undefined) {
     res.status(400).json({ error: "Expired or unknown id, please register again!" });
   } else {
     const user = await User.findOne({ where: { email: userConfirmation.email } });
-    console.log("user", user);
     if (!user) {
       res.status(400).json({ error: "Not found!" });
     } else {
@@ -37,7 +33,7 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
         // only cleanup if user login was actually enabled
         await UserEmail.delete(userConfirmation.id);
       }
-      res.status(200).json({ ok: true });
+      res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
     }
   }
 };
@@ -52,24 +48,20 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
  * @param http response - succes JSON: { OK: true } - error JSON: { error: 'message' }
  * @returns http response - true when user is confirmed, false otherwise
  */
-export const resetPasswordEmail = async (req: Request, res: Response) => {
-  console.log("req.params", JSON.stringify(req.params));
-
+export const resetPasswordForm = async (req: Request, res: Response) => {
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
   const userReset = await UserEmail.findOne({ where: { uuid: req.params.id, reason: RESETPWD } });
-  // console.log("resetPasswordEmail", userReset);
   if (userReset === undefined) {
     res.status(400).json({ error: "Expired or unknown id, please reset again!" });
   } else {
     const user = await User.findOne({ where: { email: userReset.email } });
-    console.log("user", user);
     if (!user) {
       res.status(400).json({ error: "Not found!" });
     } else {
       // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
-      const resetPwdToken = await resetPasswordToken(user);
-      res.set({ Authorization: "bearer " + resetPwdToken });
-      const html = resetPasswordForm(resetPwdToken);
+      const html = resetPasswordHtml();
+      const resetPwdToken = await createResetPasswordToken(user);
+      res.cookie("roj", resetPwdToken, { httpOnly: true });
       res.send(html);
     }
   }
@@ -148,8 +140,6 @@ const createEmailUrl = async (email: string, reason: string) => {
     }
 
     const result = await UserEmail.create({ uuid, email, reason }).save();
-    console.log("createEmailUrl", JSON.stringify(result));
-
     if (result instanceof UserEmail && result.uuid === uuid && result.email === email) {
       uniqeUUID = true;
     }

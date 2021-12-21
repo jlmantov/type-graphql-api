@@ -9,7 +9,7 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { handleJwtRefreshTokenRequest } from "./utils/auth";
 import { createSchema } from "./utils/createSchema";
-import { CONFIRMUSER, confirmUserEmail, resetPasswordEmail, RESETPWD } from "./utils/sendEmail";
+import { CONFIRMUSER, confirmUserEmail, resetPasswordForm, RESETPWD } from "./utils/sendEmail";
 import { verifyPasswordReset } from "./utils/verifyPasswordReset";
 
 const corsOptions = {
@@ -32,25 +32,26 @@ const corsOptions = {
   });
   app.get("/user/" + RESETPWD + "/:id", async (req, res, _next) => {
     // http://localhost:4000/user/resetpwd/5052ef22-4d6a-4d29-925a-4856148068c8
-    console.log(
-      "GET /user/" + RESETPWD + "/ called with req.headers: ",
-      JSON.stringify(req.headers, null, 2)
-    );
-    resetPasswordEmail(req, res);
+    try {
+      resetPasswordForm(req, res);
+    } catch (error) {
+      res.status(400).send(error.name + ": " + error.message);
+    }
   });
   app.post("/user/" + RESETPWD + "/:id", async (req, res, _next) => {
     // http://localhost:4000/user/resetpwd/5052ef22-4d6a-4d29-925a-4856148068c8
-    console.log("POST /user/" + RESETPWD + "/ params: ", req.params);
-    console.log("POST /user/" + RESETPWD + "/ body: ", req.body);
-    console.log("POST /user/" + RESETPWD + "/ headers: ", JSON.stringify(req.headers, null, 2));
-
-    const success = await verifyPasswordReset(req, res);
-    console.log();
-    if (!success) {
-      res.status(400).send("Attempt to reset password failed!");
+    try {
+      const success = await verifyPasswordReset(req, res);
+      if (!success) {
+        res.status(400).send("Attempt to reset password failed!");
+      }
+      res.clearCookie("jid"); // password changed, refreshToken is no longer valid
+      res.clearCookie("roj");
+      res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
+    } catch (error) {
+      res.clearCookie("roj");
+      res.status(400).send(error.name + ": " + error.message);
     }
-    // res.status(200).send("OK");
-    res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
   });
   app.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
@@ -74,21 +75,3 @@ const corsOptions = {
     console.log(`Express server started at port ${port}`);
   });
 })();
-
-// createConnection().then(async connection => {
-
-//     console.log("Inserting a new user into the database...");
-//     const user = new User();
-//     user.firstName = "Timber";
-//     user.lastName = "Saw";
-//     user.age = 25;
-//     await connection.manager.save(user);
-//     console.log("Saved a new user with id: " + user.id);
-
-//     console.log("Loading users from the database...");
-//     const users = await connection.manager.find(User);
-//     console.log("Loaded users: ", users);
-
-//     console.log("Here you can setup and run express/koa/any other framework.");
-
-// }).catch(error => console.log(error));

@@ -16,15 +16,12 @@ export class RegisterResolver {
 
     // first of all, find out if email is already in the database
     const registeredUser = await User.findOne({ where: { email } });
-    // console.log("registeredUser", registeredUser);
     if (registeredUser) {
       throw new Error("Error: user already exist!"); // avoid duplicates
     }
 
     // encrypt the password (keep it a secret)
     const hashedPassword = await hash(password);
-    // console.log("hashedPassword", hashedPassword);
-
     const user = await User.create({
       firstName,
       lastName,

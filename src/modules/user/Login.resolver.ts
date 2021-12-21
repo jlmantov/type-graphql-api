@@ -1,7 +1,7 @@
 import { Arg, Ctx, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { User } from "../../entity/User";
 import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../utils/auth";
-import { verify } from "../../utils/crypto";
+import { verifyPwd } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 
 /**
@@ -28,7 +28,13 @@ export class LoginResolver {
       throw new Error("Invalid email or password!");
     }
 
-    const validated = await verify(password, user.password);
+    let validated = false;
+    try {
+      validated = await verifyPwd(password, user.password);
+    } catch (error) {
+      throw error;
+    }
+
     if (!validated) {
       throw new Error("Invalid username or password!");
     }

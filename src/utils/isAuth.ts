@@ -1,6 +1,6 @@
 import { MiddlewareFn } from "type-graphql";
 import { User } from "../entity/User";
-import { getJwtAccessPayload, JwtAccessPayload } from "./auth";
+import { getJwtPayload, JwtAccessPayload } from "./auth";
 import { GraphqlContext } from "./GraphqlContext";
 
 /**
@@ -19,15 +19,19 @@ export const isAuth: MiddlewareFn<GraphqlContext> = async ({ context }, next) =>
 
   try {
     const token = authorization.split(" ")[1];
-    const payload: JwtAccessPayload = getJwtAccessPayload(token); // verified attribute userId
-    console.log("isAuth payload", JSON.stringify(payload));
-
-    const user = await User.findOne(payload.userId);
-    if (!user) {
-      throw new Error('Unable to verify user!');
+    let payload: JwtAccessPayload | undefined = undefined;
+    try {
+      // accessPayload = { bit: user.id, ogj: user.tokenVersion };
+      payload = getJwtPayload(token) as JwtAccessPayload; // verified attribute userId
+    } catch (error) {
+      throw error; // propagate possible token verification error from 'deeper layers'
     }
-    if (user.tokenVersion !== payload.v) {
-      // console.log(`isAuth: payload.tokenVersion=${payload.v}, DB tokenVersion=${user.tokenVersion}`);
+
+    const user = await User.findOne(payload.bit);
+    if (!user) {
+      throw new Error("Unable to verify user!");
+    }
+    if (user.tokenVersion !== payload.ogj) {
       throw new Error("Access expired, please login again!");
     }
 
@@ -37,7 +41,6 @@ export const isAuth: MiddlewareFn<GraphqlContext> = async ({ context }, next) =>
     // 'isAuth: TokenExpiredError - jwt expired!'
     // 'isAuth: JsonWebTokenError - <token> malformed!'
     // 'isAuth: JsonWebTokenError - invalid signature!'
-    console.error("isAuth: " + error.name + " - " + error.message + "!");
     throw error;
   }
 

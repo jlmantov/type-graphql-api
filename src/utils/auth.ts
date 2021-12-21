@@ -5,8 +5,22 @@ import { User } from "../entity/User";
 import { GraphqlContext } from "./GraphqlContext";
 
 export interface JwtAccessPayload {
-  userId: string;
-  v: number;
+  bit: string; // userId
+  ogj: number; // tokenVersion
+  iat: number;
+  exp: number;
+}
+
+export interface JwtRefreshPayload {
+  kew: string; // userId
+  tas: number; // tokenVersion
+  iat: number;
+  exp: number;
+}
+
+export interface JwtResetPayload {
+  plf: string; // userId
+  rnl: number; // tokenVersion
   iat: number;
   exp: number;
 }
@@ -16,15 +30,16 @@ export interface JwtAccessPayload {
  * @param user the user who attempts to login
  * @returns JWT accessToken
  */
-export const resetPasswordToken = async (user: User) => {
-  const accessPayload = { userId: user.id, v: user.tokenVersion }; // typesafety - could be: parseInt(user.id.toString())
-  const accessOptions: SignOptions = {
+export const createResetPasswordToken = async (user: User) => {
+  // payload is different from accessToken - this way resetToken can't be used to access GraphQL
+  const resetPayload = { plf: user.id, rnl: user.tokenVersion };
+  const resetOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
     expiresIn: "3m",
     algorithm: "HS384",
   };
   // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
-  return await jwt.sign(accessPayload, process.env.JWT_ACCESS_TOKEN_SECRET!, accessOptions);
+  return await jwt.sign(resetPayload, process.env.JWT_ACCESS_TOKEN_SECRET!, resetOptions);
 };
 
 /**
@@ -33,7 +48,7 @@ export const resetPasswordToken = async (user: User) => {
  * @returns JWT accessToken
  */
 export const createAccessToken = async (user: User) => {
-  const accessPayload = { userId: user.id, v: user.tokenVersion }; // typesafety - could be: parseInt(user.id.toString())
+  const accessPayload = { bit: user.id, ogj: user.tokenVersion };
   const accessOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
     expiresIn: "15m",
@@ -49,7 +64,7 @@ export const createAccessToken = async (user: User) => {
  * @returns JWT refreshToken
  */
 export const createRefreshToken = async (user: User) => {
-  const refreshPayload = { userId: user.id, v: user.tokenVersion };
+  const refreshPayload = { kew: user.id, tas: user.tokenVersion };
   const refreshOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
     expiresIn: "7d",
@@ -82,31 +97,32 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
   const token = req.cookies.jid;
   if (!token) {
-    return res.send({ ok: false, accessToken: "" });
+    res.clearCookie("jid");
+    return res.send({ ok: false, accessToken: "", error: "Access denied!" });
   }
 
-  let payload: any = null;
+  let payload: JwtRefreshPayload | null = null;
   try {
-    payload = verify(token, jwtRefreshSecretKey);
+    payload = verify(token, process.env.JWT_REFRESH_TOKEN_SECRET!) as JwtRefreshPayload;
   } catch (error) {
     console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
+    res.clearCookie("jid");
     return res.send({ ok: false, accessToken: "", error: error.message });
   }
 
   //  token is valid and we can return an accessToken
-  const user = await User.findOne({ id: payload.userId });
+  const userId = parseInt(payload!.kew, 10);
+  const user = await User.findOne({ id: userId });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
-    return res.send({ ok: false, accessToken: "" });
+    return res.send({ ok: false, accessToken: "", error: "System error!" });
   }
 
-  // console.log(
-  //   `handleJwtRefreshTokenRequest: payload.v=${payload.v}, DB tokenVersion=${user.tokenVersion}`
-  // );
-  if (user.tokenVersion !== payload.v) {
+  if (user.tokenVersion !== payload.tas) {
     // If user has forgotten password/changed password or for some reason decides to invalidate existing sessions,
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
+    res.clearCookie("jid");
     return res.send({
       ok: false,
       accessToken: "",
@@ -125,13 +141,13 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
  * call jsonwebtoken.verify, then verify existense of userId in payload
  * @param token accessToken
  */
-export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
+export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload => {
   try {
-    const jwtPayload: any = verify(token, jwtAccessSecretKey);
-    if (!jwtPayload || jwtPayload instanceof String) {
+    const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
+    if (!jwtPayload) {
       throw new Error("Unknown token!");
     }
-    if (!jwtPayload.userId) {
+    if (!(jwtPayload.bit || jwtPayload.plf)) {
       throw new Error("Invalid token!");
     }
     return jwtPayload;
@@ -148,18 +164,15 @@ export const getJwtAccessPayload = (token: string): JwtAccessPayload => {
 export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean> => {
   const result = await getConnection()
     .getRepository(User)
-    .increment({ id: parseInt(ctx.payload!.userId, 10) }, "tokenVersion", 1);
+    .increment({ id: parseInt(ctx.payload!.bit, 10) }, "tokenVersion", 1); // accessToken.bit = userId
   if (result.affected !== 1) {
     return false;
   }
 
   // In order to avoid loking up user on every isAuth request, increment context directly
-  ctx.payload!.v = parseInt(ctx.payload!.v.toString(), 10) + 1;
+  ctx.payload!.ogj = parseInt(ctx.payload!.ogj.toString(), 10) + 1;
+  ctx.res.clearCookie("jid");
 
   console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
   return true;
 };
-
-export const jwtAccessSecretKey = process.env.JWT_ACCESS_TOKEN_SECRET!;
-export const jwtRefreshSecretKey = process.env.JWT_REFRESH_TOKEN_SECRET!;
-

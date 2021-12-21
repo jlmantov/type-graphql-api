@@ -556,7 +556,7 @@ Queries/mutations:
 - revokeTokens(context) - relevant for reset/change password, refactor into two different mutations: `resetPassword` (using email) and `changePassword`
 - register(firstname, lastname, email, password) - ready
 - confirmEmail(uuid) - endpoint outside API
-- unconfirmedUserCleanup() - not a customer task. why put this in an API??
+- userEmailCleanup() - not a customer task. why put this in an API??
 
 Most of this is just dev/test junk. Only `register` and `login` are ready to go into their own resolvers.
 
@@ -592,7 +592,7 @@ This *Reset Password* endpoint is not just *any* new endpoint, it has some extra
 Several tasks line up already.
 
 
-### Multipe kinds of user emails - refactor to handle different kinds of email
+### Multiple kinds of user emails - refactor to handle different kinds of email
 - rename DB table `UserEmailConfirmations` to something more generic: `userEmail`
 - add emailtype to `userEmail` - the field 'reason' is introduced
 - rename `sendConfirmationEmail.ts` to something more generic: `src/utils/sendEmail.ts`
@@ -612,14 +612,17 @@ Several tasks line up already.
   - token is used to verify timespan
   - token is used to lookup userId (cross-referencing uuid and token to maximize security)
 - new **verifyPasswordReset** to update password
-- redirect to login/lading page on success
+- redirect to login/landing page on success
 
 
 Creating a user dialog, GET and POST endpoints, with an 'Authorization' header in Form.submit turned out to be more tricky than I expected:
 1. First, I ran into issues on how to set the Authorization header - solution:
+    - create a cookie with resetToken
     - create an XMLHttpRequest
-    - send response (password, uuid and token) through that XMLHttpRequest-dialog
-    - redirect page if XMLHttpRequest succeeded
+    - send response (password) through that XMLHttpRequest-dialog
+    - if XMLHttpRequest succeeded:
+      1. delete cookies: resetCookie and refreshCookie
+      2. redirect to login/landing page
 2. Then I realized that express itself didn't cooporate. Receiving Form content required an extra package:
     - add [body-parser](https://www.npmjs.com/package/body-parser) as middleware to express
 3. and of course, CORS issues also showed up:

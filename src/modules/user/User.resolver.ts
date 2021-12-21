@@ -3,7 +3,7 @@ import { getConnection } from "typeorm";
 import { User } from "../../entity/User";
 import { UserEmail } from "../../entity/UserEmail";
 import { revokeRefreshTokens } from "../../utils/auth";
-import { verify } from "../../utils/crypto";
+import { verifyPwd } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuth } from "../../utils/isAuth";
 
@@ -37,10 +37,18 @@ export class UserResolver {
       return null;
     }
 
-    const validated = await verify(password, user.password);
+    // const validated = await verifyPwd(password, user.password);
+    let validated = false;
+    try {
+      validated = await verifyPwd(password, user.password);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
     if (!validated) {
       return null;
     }
+
     // notice, that even though user contains both salt and password, those fields are kept private
     return user;
   }
@@ -57,8 +65,8 @@ export class UserResolver {
 
     // By adding authentication as middleware, the authentication is performed before the query takes place.
     // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
-    console.log(`isAuthenticated: userId ${payload!.userId} is authenticated!`);
-    return `userId ${payload!.userId} is authenticated!`;
+    console.log(`isAuthenticated: userId ${payload!.bit} is authenticated!`);
+    return `userId ${payload!.bit} is authenticated!`;
   }
 
   /**
@@ -106,7 +114,7 @@ export class UserResolver {
 
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
   async userEmailCleanup(): Promise<boolean> {
-    // tell TypeScript that unconfirmedUserCleanup returns a promise of type boolean
+    // tell TypeScript that userEmailCleanup returns a promise of type boolean
 
     let timeout = new Date().getTime(); // current timestamp - ms since '01-01-1970 00:00:00.000 UTC'
     timeout = timeout - 1000 * 60 * 60 * 24 * 2; // two days: 1000 ms * 60 s * 60 m * 24 h * 2 days

@@ -1,4 +1,4 @@
-export const resetPasswordForm = (token: string) => {
+export const resetPasswordHtml = () => {
   return `<!DOCTYPE html>
 <html>
   <head>
@@ -14,7 +14,7 @@ export const resetPasswordForm = (token: string) => {
   </head>
   <body>
     <div class="col-md-6 offset-md-3">
-      <span class="anchor" id="formChangePassword"></span>
+      <span class="anchor" id="formSetPwd"></span>
       <hr class="mb-5" />
 
       <!-- form card reset password -->
@@ -23,7 +23,7 @@ export const resetPasswordForm = (token: string) => {
           <h3 class="mb-0">Reset Password</h3>
         </div>
         <div class="card-body">
-          <form id="resetpwd" class="form" role="form" autocomplete="off">
+          <form id="formSetPwd" class="form" role="form" autocomplete="off">
             <div class="form-group">
               <label for="pw1">New Password</label>
               <input
@@ -53,7 +53,7 @@ export const resetPasswordForm = (token: string) => {
                 id="submit"
                 name="Update"
                 value="Update"
-                class="btn btn-primary btn-lg float-right"
+                class="btn btn-secondary btn-lg float-right"
                 disabled="true"
               />
             </div>
@@ -68,44 +68,52 @@ export const resetPasswordForm = (token: string) => {
         const pw2 = document.getElementById("pw2").value;
         if (pw1 !== pw2) {
           document.getElementById("submit").disabled = true;
-          document.getElementById("submit").classList.add("btn-primary");
+          document.getElementById("submit").classList.add("btn-secondary");
           document.getElementById("submit").classList.remove("btn-success");
         } else {
           document.getElementById("submit").disabled = false;
-          document.getElementById("submit").classList.remove("btn-primary");
+          document.getElementById("submit").classList.remove("btn-secondary");
           document.getElementById("submit").classList.add("btn-success");
         }
       }
       function updateSuccess() {
         window.location.replace("http://${process.env.DOMAIN}:${process.env.PORT}/");
       }
+      function updateFailed(status, msg) {
+        document.body.innerHTML = "<h2>Update failed!</h2>"
+      }
 
       // submit
       window.onload = () => {
         document.getElementById("submit").addEventListener("click", (evt) => {
           // evt.preventDefault();
-          console.log('updatePassword evt', evt);
+          document.getElementById("submit").disabled = true;
+          document.getElementById("submit").classList.remove("btn-success");
+          document.getElementById("submit").classList.add("btn-primary");
           // URL is something like this: http://${process.env.DOMAIN}:${process.env.PORT}/user/resetpwd/f391146b-13d2-44bd-a1f5-f0ffeef5c28c
           const uuid = window.location.href.split('/').slice(-1)[0]; // last element array, produced by splitting url by '/'
           const pwd = document.getElementById("pw1").value;
-          const form = document.getElementById("resetpwd");
+          const form = document.getElementById("formSetPwd");
           const xhr = new XMLHttpRequest(); // https://developer.mozilla.org/en-US/search?q=XMLHttpRequest
           xhr.open("POST", "http://${process.env.DOMAIN}:${process.env.PORT}/user/resetpwd/" + uuid, true);
           // xhr.setRequestHeader("Accept", "application/json");
           xhr.setRequestHeader("Content-Type", "application/json");
           xhr.withCredentials = false;
-          xhr.setRequestHeader("Authorization", "Bearer ${token}");
 
           xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                console.log('xhr.status', xhr.status);
-                console.log('xhr.responseText', xhr.responseText);
-            };
+            if (this.readyState === XMLHttpRequest.DONE) {
+              // Request finished. Do processing here.
+              if (this.status === 200) {
+                updateSuccess();
+              } else {
+                // console.log('XMLHttpRequest Status '+ xhr.status +' - ResponseText: ', xhr.responseText);
+                updateFailed(xhr.status, xhr.responseText);
+              }
+            }
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-              updateSuccess(); // Request finished. Do processing here.
             }
           };
-          xhr.send(JSON.stringify({ pwd: pwd, token: "${token}" }));
+          xhr.send(JSON.stringify({ pwd: pwd }));
         });
       };
     </script>
