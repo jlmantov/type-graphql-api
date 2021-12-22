@@ -61,7 +61,7 @@ export const resetPasswordForm = async (req: Request, res: Response) => {
       // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
       const html = resetPasswordHtml();
       const resetPwdToken = await createResetPasswordToken(user);
-      res.cookie("roj", resetPwdToken, { httpOnly: true });
+      res.cookie("roj", resetPwdToken, { httpOnly: true, sameSite: 'strict' });
       res.send(html);
     }
   }

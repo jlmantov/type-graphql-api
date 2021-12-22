@@ -1,6 +1,7 @@
 # TypeGraphQL API - with Email authentication and JWT authorization
 
 ## Content
+
 - [Motivation](./#motivation)
 - [Technologies](https://github.com/jlmantov/type-graphql-api#technologies)
 - [Setup GraphQL server using TypeGraphQL and TypeORM](https://github.com/jlmantov/type-graphql-api#setup-graphql-server-using-typegraphql-and-typeorm)
@@ -17,7 +18,6 @@
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
 - [Automated test - Jest](https://github.com/jlmantov/type-graphql-api#automated-test---jest)
 
-
 ## Motivation
 
 This Readme was never intended to be a stand-alone step by step walk-through.
@@ -26,7 +26,6 @@ It would be more precise to call it sort of a 'memory map' - a guide to reproduc
 If this is helpful to others - please, be my guest. My personal mindset includes curiosity and a playful attitude. If something seems unclear, I suggest looking into the [commit-history](https://github.com/jlmantov/type-graphql-api/commits/main) and following the file changes along the way ... and of course: additional reading in general.
 
 Based on a mix of [tutorials and articles](./docs/links.md)
-
 
 ## Technologies
 
@@ -524,7 +523,7 @@ The `register` mutation calls `sendConfirmationEmail`. This way, an email is sen
 
 ### Recieve the confirmation and enable login
 
-Confirming a new user email should always be a manual event, done by a person - not an automated integration API. Also, email confirmation is (hopefully) used rarely, compared to *day to day* activities.
+Confirming a new user email should always be a manual event, done by a person - not an automated integration API. Also, email confirmation is (hopefully) used rarely, compared to _day to day_ activities.
 
 Are there any good reasons to add a `confirmEmail` mutation? Well, the only thing I can come up with, is if I create an email client myself, that use this API.
 
@@ -532,14 +531,12 @@ Please let me know, if you can provide solid arguments for adding email confirma
 
 Right now, I choose to follow Ben Awad's [tutorial](https://www.youtube.com/watch?v=OP39UioapL8&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=6) and add a `confirmEmail` mutation - which, by the way, makes manual testing a lot easier ... I would propably choose otherwise in real world scenarios.
 
-
 ### Confirmation Email endpoint
 
 Endpoint for receiving emails is going to be: http://{proces.env.DOMAIN}:{proces.env.PORT}/users/confirm/:id
 
 - URL endpoint is added to `src/index.ts`
 - Method implementation og `confirmEmail` is placed beside the other email handling ... this might be subject to refactoring along the way.
-
 
 ## Reorganize TypeGaphQL Resolvers
 
@@ -550,6 +547,7 @@ Testing will be added soon. Developing different tasks in parallel might cause m
 Requests/mutations that positively goes into production, are extracted into their own resolvers.
 
 Queries/mutations:
+
 - users() - Temporary dev/test
 - getUser(email, password) - might be used in future code. Considered temporary dev/test until then
 - login(email, password, context) - ready
@@ -570,44 +568,48 @@ Most of this is just dev/test junk. Only `register` and `login` are ready to go 
 ## Reset Password
 
 I believe resetting a password should be a fairly simple process-flow from the user's perspective:
+
 - Push some kind of 'button'
 - Type in new password (twice) and press 'Update' ... and voila, the password is updated!
 - Redirect to login-/landing page when done
 
 Resetting password is where I would expect hackers to search for vulnerabilities - I personally want to make this as safe as possible:
+
 - involve user email in order to protect against hijacking
-- reduce *window of opportunity* to a short period of time
+- reduce _window of opportunity_ to a short period of time
 
 That makes my process flow look like this:
+
 1. Push some kind of 'button'
 2. receive an email with a link that only works for a short period of time
 3. activate link from email
 4. type in new password (twice) and press the 'Update' button ... and voila, the password is updated!
-6. redirect to login-/landing page when done
+5. redirect to login-/landing page when done
 
-This *Reset Password* endpoint is not just *any* new endpoint, it has some extra restrictions:
+This _Reset Password_ endpoint is not just _any_ new endpoint, it has some extra restrictions:
+
 - it is unique to a specific user/email
 - it presents a password form to the user
 - it has a timeout - meaning that the form submit must include a JWT token
 
 Several tasks line up already.
 
-
 ### Multiple kinds of user emails - refactor to handle different kinds of email
+
 - rename DB table `UserEmailConfirmations` to something more generic: `userEmail`
 - add emailtype to `userEmail` - the field 'reason' is introduced
 - rename `src/utils/sendConfirmationEmail.ts` to something more generic: `src/utils/sendEmail.ts`
 - refactor `src/utils/sendEmail.ts` to handle several kinds of tasks
 
-
 ### New process-flow
+
 - add **resetPasswordToken** with expiration time: 3 minutes
 - add **resetPasswordEmail** to `src/utils/sendEmail.ts`
-- new TypeGraphQL resolver to initiate *Reset Password* flow: `src/modules/user/ResetPassword.resolver.ts`
-- add GET endpoint to provide user with *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
-  - resetPasswordToken is provided in a new cookie (httpOnly: true)
-  - password validation added to form (for now, simply that the two typed in passwords are the same)
-- add POST endpoint to handle user response from *Reset Password* form: http://localhost:4000/user/resetpwd/:uuid
+- new TypeGraphQL resolver to initiate _Reset Password_ flow: `src/modules/user/ResetPassword.resolver.ts`
+- add GET endpoint to provide user with _Reset Password_ form: http://localhost:4000/user/resetpwd/:uuid
+  - resetPasswordToken is provided in a new cookie with options [{ httpOnly: true, sameSite: 'strict' }](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies)
+  - password credentials are validated before 'Update' button is enabled (for now, simply that the two typed in passwords are the same)
+- add POST endpoint to handle user response from _Reset Password_ form: http://localhost:4000/user/resetpwd/:uuid
   - url uuid is used to identify userEmail in DB
   - token (from cookie) is used to identify user in DB.
   - cross-referencing uuid and token in order to avoid cheating
@@ -615,28 +617,53 @@ Several tasks line up already.
 - new **verifyPasswordReset** to update password
 - redirect to login/landing page on success
 
+### Creating a safe user dialog, GET and POST endpoints with authorization
 
-Creating a user dialog, GET and POST endpoints with authorization, turned out to be more tricky than I expected:
-1. First, I ran into issues on how to set the authorization - solution:
-    - create a cookie with resetToken
-    - create an XMLHttpRequest
-    - send response (password) through that XMLHttpRequest-dialog
-    - if XMLHttpRequest succeeded:
-      1. delete cookies: resetCookie and refreshCookie
-      2. redirect to login/landing page
-2. Then I realized that express itself didn't cooporate. Receiving Form content required an extra package:
-    - add [body-parser](https://www.npmjs.com/package/body-parser) as middleware to express
-3. and of course, CORS issues also showed up:
-    - add [cors](https://www.npmjs.com/package/cors) as middleware to express
+This turned out to be more tricky than I expected.
 
+1. Express itself doesn't cooporate by default. Receiving Form content requires an extra package:
 
-Finally, I got *Reset Password* to follow the wanted flow.
+   - add [body-parser](https://www.npmjs.com/package/body-parser) as middleware to express
 
-The last step, adding `src/utils/verifyPasswordReset.ts` was *a walk in the park* compared to the http dialog. :)
+2. CORS also require an extra package:
 
+   - add [cors](https://www.npmjs.com/package/cors) as middleware to express
+
+3. Authorization: an email link is activated - the client/browser is unknown, there's no entry conditions, like assuming a cookie is set or something - starting point is the uuid in that email-link.
+   - create a cookie with resetToken (timeout is 3 minutes from the link is activated)
+   - GET presents an Input Form to type password twice - 'Update' button is enabled when the typed in values meet credentials (are equal)
+   - create an XMLHttpRequest, send password to POST endpoint through that XMLHttpRequest-dialog
+     - CORS options ensure that POST only receives request from one known domain: localhost:4000
+     - cookie options ensure that the token is 'read-only' to javascript (httpOnly=true) and the cookie is only sent to the site where it originated (SameSite=Strict)
+   - POST endpoint uses uuid from url + cookie from GET to verify user identity
+   - POST responds back to GET through the XMLHttp-dialog
+   - GET responds back to the user/browser
+   - if update succeeded:
+     - delete cookies: resetCookie and, if present, refreshCookie which is invalid by now
+     - delete uuid from email-link (one-time-only)
+     - redirect to login/landing page
+   - in case of error:
+     - uuid is preserved and link is active until update is successful
+     - resetToken/cookie is deleted, a new resetToken is created on link activation
+     - if other reset emails are sent - only the last email is active (previous uuid values are removed)
+
+### Validate new password
+
+POST request is handled by `src/utils/verifyPasswordReset.ts`:
+
+- url uuid is used to identify userEmail in DB
+- token (from cookie) is used to identify user in DB.
+- cross-reference uuid and token in order to make cheating harder
+- token is used to verify timespan
+- On succees:
+  - password is hashed
+  - user is updated
+  - uuid is deleted
+- On error:
+  - anonymous error is thrown, user might be looking for a vulnerabilities
+
+To me, the hard part here was definitely the http dialog - a combination of token, cookie, XmlHttp, Express middleware to provide security ... and of course (important) a smooth user dialog!!
 
 ## TO DO: Automated test - Jest
 
-
-
-
+Inspired by [this tutorial](https://www.youtube.com/watch?v=fxYcbw56mbk&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=9).
