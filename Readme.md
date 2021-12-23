@@ -581,7 +581,7 @@ Resetting password is where I would expect hackers to search for vulnerabilities
 That makes my process flow look like this:
 
 1. Push some kind of 'button'
-2. receive an email with a link that only works for a short period of time
+2. receive an email with a link that only works for a short period of time (1-2 days, then the uuid will be deleted by automatic cleanup)
 3. activate link from email
 4. type in new password (twice) and press the 'Update' button ... and voila, the password is updated!
 5. redirect to login-/landing page when done
@@ -603,7 +603,7 @@ Several tasks line up already.
 
 ### New process-flow
 
-- add **resetPasswordToken** with expiration time: 3 minutes
+- add **resetPasswordToken** with expiration time: 3 minutes (to type in password twice and click 'Update')
 - add **resetPasswordEmail** to `src/utils/sendEmail.ts`
 - new TypeGraphQL resolver to initiate _Reset Password_ flow: `src/modules/user/ResetPassword.resolver.ts`
 - add GET endpoint to provide user with _Reset Password_ form: http://localhost:4000/user/resetpwd/:uuid
@@ -612,7 +612,7 @@ Several tasks line up already.
 - add POST endpoint to handle user response from _Reset Password_ form: http://localhost:4000/user/resetpwd/:uuid
   - url uuid is used to identify userEmail in DB
   - token (from cookie) is used to identify user in DB.
-  - cross-referencing uuid and token in order to avoid cheating
+  - cross-referencing uuid and token in order to make cheating harder
   - token is used to verify timespan
 - new **verifyPasswordReset** to update password
 - redirect to login/landing page on success
@@ -629,9 +629,9 @@ This turned out to be more tricky than I expected.
 
    - add [cors](https://www.npmjs.com/package/cors) as middleware to express
 
-3. Authorization: an email link is activated - the client/browser is unknown, there's no entry conditions, like assuming a cookie is set or something - starting point is the uuid in that email-link.
+3. Authorization: an email link is activated. The client/browser is unknown, there's no entry conditions, like a cookie or something - starting point is the uuid in that email-link.
    - create a cookie with resetToken (timeout is 3 minutes from the link is activated)
-   - GET presents an Input Form to type password twice - 'Update' button is enabled when the typed in values meet credentials (are equal)
+   - GET presents an Input Form to type password twice - 'Update' button is enabled when the password credentials are met (for now, typed values are equal)
    - create an XMLHttpRequest, send password to POST endpoint through that XMLHttpRequest-dialog
      - CORS options ensure that POST only receives request from one known domain: localhost:4000
      - cookie options ensure that the token is 'read-only' to javascript (httpOnly=true) and the cookie is only sent to the site where it originated (SameSite=Strict)
@@ -653,7 +653,7 @@ POST request is handled by `src/utils/verifyPasswordReset.ts`:
 
 - url uuid is used to identify userEmail in DB
 - token (from cookie) is used to identify user in DB.
-- cross-reference uuid and token in order to make cheating harder
+- cross-reference uuid and token to make cheating harder
 - token is used to verify timespan
 - On succees:
   - password is hashed
