@@ -88,7 +88,7 @@ export const resetPasswordHtml = () => {
 
       // submit
       window.onload = () => {
-        setTimeout(resetPasswordTimeout, 5000);
+        setTimeout(resetPasswordTimeout, 300000);
         document.getElementById("submit").addEventListener("click", (evt) => {
           // evt.preventDefault();
           document.getElementById("submit").disabled = true;
