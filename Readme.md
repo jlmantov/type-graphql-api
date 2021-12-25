@@ -16,7 +16,7 @@
 - [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
 - [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
-- [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#-Reorganize-project---routes,-controllers,-middleware,-graphql)
+- [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#reorganize-project---routes-controllers-middleware-graphql)
 
 ## Motivation
 
