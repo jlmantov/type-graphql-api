@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { JwtAccessPayload } from "./auth";
+import { JwtAccessPayload } from "../../utils/auth";
 
 export interface GraphqlContext {
   req: Request;

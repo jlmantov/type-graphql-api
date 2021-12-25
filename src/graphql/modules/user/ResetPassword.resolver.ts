@@ -1,7 +1,8 @@
 import { Arg, Mutation, Resolver } from "type-graphql";
 import { getConnection } from "typeorm";
+import { RESETPWD } from "../../../routes/user";
+import { sendUserEmail } from "../../../utils/sendEmail";
 import { User } from "../../entity/User";
-import { RESETPWD, sendUserEmail } from "../../utils/sendEmail";
 
 @Resolver()
 export class ResetPasswordResolver {

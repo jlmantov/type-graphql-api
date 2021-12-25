@@ -1,13 +1,11 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { v4 } from "uuid";
-import { User } from "../entity/User";
-import { UserEmail } from "../entity/UserEmail";
+import { User } from "../graphql/entity/User";
+import { UserEmail } from "../graphql/entity/UserEmail";
+import { CONFIRMUSER, RESETPWD } from "../routes/user";
 import { createResetPasswordToken } from "./auth";
 import { resetPasswordHtml } from "./resetPasswordForm";
-
-export const CONFIRMUSER = "confirm";
-export const RESETPWD = "resetpwd";
 
 /**
  * Verify uuid from request url, enable login and cleanup email confirmation
@@ -61,7 +59,7 @@ export const resetPasswordForm = async (req: Request, res: Response) => {
       // now create a JSON Web Token - https://www.npmjs.com/package/jsonwebtoken
       const html = resetPasswordHtml();
       const resetPwdToken = await createResetPasswordToken(user);
-      res.cookie("roj", resetPwdToken, { httpOnly: true, sameSite: 'strict' });
+      res.cookie("roj", resetPwdToken, { httpOnly: true, sameSite: "strict" });
       res.send(html);
     }
   }

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import jwt, { SignOptions, verify } from "jsonwebtoken";
 import { getConnection } from "typeorm";
-import { User } from "../entity/User";
-import { GraphqlContext } from "./GraphqlContext";
+import { User } from "../graphql/entity/User";
+import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 
 export interface JwtAccessPayload {
   bit: string; // userId
@@ -35,7 +35,7 @@ export const createResetPasswordToken = async (user: User) => {
   const resetPayload = { plf: user.id, rnl: user.tokenVersion };
   const resetOptions: SignOptions = {
     header: { alg: "HS384", typ: "JWT" },
-    expiresIn: "3m",
+    expiresIn: "5m",
     algorithm: "HS384",
   };
   // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");

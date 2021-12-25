@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { validate as uuidValidate } from "uuid";
-import { User } from "../entity/User";
-import { UserEmail } from "../entity/UserEmail";
+import { User } from "../graphql/entity/User";
+import { UserEmail } from "../graphql/entity/UserEmail";
+import { RESETPWD } from "../routes/user";
 import { getJwtPayload, JwtResetPayload } from "./auth";
 import { hash } from "./crypto";
-import { RESETPWD } from "./sendEmail";
 
 /**
  * Verify input from 'Reset password' response. Is all is fine, update hashedPassword in DB
@@ -18,12 +18,22 @@ import { RESETPWD } from "./sendEmail";
  * @returns boolean - true if hashedPassword is updated, false/error otherwise
  */
 export const verifyPasswordReset = async (req: Request, _res: Response) => {
-  let validUUID = false;
   if (!req.params.id) {
     // throw new Error("url param missing!");
-    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
+    throw new Error("Cannot POST /user/resetpwd/"); // anonymous error, user might be looking for a vulnerabilities
   }
+  //   validate POST params existence
+  if (!req.body.pwd) {
+    // throw new Error("Passwordmissing!");
+    throw new Error("Cannot POST /user/resetpwd/"); // anonymous error, user might be looking for a vulnerabilities
+  }
+  if (!req.cookies.roj) {
+    // throw new Error("cookie missing!");
+    throw new Error("Cannot POST /user/resetpwd/"); // anonymous error, user might be looking for a vulnerabilities
+  }
+
   //   validate uuid
+  let validUUID = false;
   const uuid = req.params.id;
   validUUID = uuidValidate(uuid);
   if (!validUUID) {
@@ -31,15 +41,6 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  //   validate POST params existence
-  if (!req.body.pwd) {
-    // throw new Error("Passwordmissing!");
-    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
-  }
-  if (!req.cookies.roj) {
-    // throw new Error("cookie missing!");
-    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
-  }
   //   validate token
   let payload: JwtResetPayload | undefined = undefined;
   let pUserId: string = "";
@@ -65,9 +66,9 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  const createdAt = new Date(userEmail.createdAt).getTime() / 1000;
   const now = Math.floor(Date.now() / 1000);
-  console.log("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 3m = 3*60s = 180s <=> exp = iat + 180
+  // const createdAt = new Date(userEmail.createdAt).getTime() / 1000;
+  // console.log("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 5m = 5*60s = 300s <=> exp = iat + 300
   if (payload.exp < now) {
     // throw new Error("Token expired!"); // Too late
     throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
@@ -92,7 +93,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
 
   const updRes = await User.update(user.id, { password: hashedPwd });
   if (updRes.affected === 1) {
-    console.log("Password updated on user: ", JSON.stringify(user)); // 3m = 3*60s = 180s <=> exp = iat + 180
+    console.log("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
     UserEmail.delete(userEmail.id); // only cleanup if password was actually enabled
   }
   return !!updRes.affected; // true if more than zero rows were affected by the update

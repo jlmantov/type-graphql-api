@@ -82,9 +82,13 @@ export const resetPasswordHtml = () => {
       function updateFailed(status, msg) {
         document.body.innerHTML = "<h2>Update failed!</h2>"
       }
+      function resetPasswordTimeout(status, msg) {
+        document.body.innerHTML = "<h2>Update timeout!</h2><p>Link is still active and can be reactivated until password is updated.</p>"
+      }
 
       // submit
       window.onload = () => {
+        setTimeout(resetPasswordTimeout, 5000);
         document.getElementById("submit").addEventListener("click", (evt) => {
           // evt.preventDefault();
           document.getElementById("submit").disabled = true;

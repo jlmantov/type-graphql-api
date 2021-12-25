@@ -1,11 +1,11 @@
 import { Arg, Ctx, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import { getConnection } from "typeorm";
+import { revokeRefreshTokens } from "../../../utils/auth";
+import { verifyPwd } from "../../../utils/crypto";
 import { User } from "../../entity/User";
 import { UserEmail } from "../../entity/UserEmail";
-import { revokeRefreshTokens } from "../../utils/auth";
-import { verifyPwd } from "../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
-import { isAuth } from "../../utils/isAuth";
+import { isAuthGql } from "../../utils/middleware/isAuth";
 
 @Resolver()
 export class UserResolver {
@@ -14,7 +14,7 @@ export class UserResolver {
    * @returns
    */
   @Query(() => [User]) // Tell type-graphql that return value is an array of type User
-  @UseMiddleware(isAuth)
+  @UseMiddleware(isAuthGql)
   users(): Promise<User[]> {
     // tell TypeScript that users returns a promise with an array of type User
     return User.find();
@@ -59,7 +59,7 @@ export class UserResolver {
    * @returns
    */
   @Query(() => String) // Tell type-graphql that return value is of type String
-  @UseMiddleware(isAuth)
+  @UseMiddleware(isAuthGql)
   isAuthenticated(@Ctx() { payload }: GraphqlContext): String {
     // tell TypeScript that isAuthenticated returns a String
 
@@ -76,7 +76,7 @@ export class UserResolver {
    * @returns
    */
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
-  @UseMiddleware(isAuth)
+  @UseMiddleware(isAuthGql)
   async revokeTokens(@Ctx() ctx: GraphqlContext) {
     // By adding authentication as middleware, the authentication is performed before the query takes place.
     // since isAuth is going to throw an error if payload is missing, we can access payload directly from here

@@ -16,7 +16,7 @@
 - [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
 - [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
-- [Automated test - Jest](https://github.com/jlmantov/type-graphql-api#automated-test---jest)
+- [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#-Reorganize-project---routes,-controllers,-middleware,-graphql)
 
 ## Motivation
 
@@ -170,7 +170,7 @@ $ npm install --save-dev @types/express
 
 2. Now, let's get Apllo Server started and GraphQL responding...
 
-Note 1: I like the [GraphQL Playground](https://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#graphql-playgroundhttps://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#graphql-playground) look and feel. In order to get that, I chose to install the ApolloServerPluginLandingPageGraphQLPlayground plugin
+Note 1: I like the [GraphQL Playground](https://www.apollographql.com/docs/apollo-server/testing/build-run-queries/#graphql-playground) look and feel. In order to get that, I chose to install the ApolloServerPluginLandingPageGraphQLPlayground plugin
 
 ```
 $ npm i -D apollo-server-core
@@ -189,9 +189,9 @@ $ npm i type-graphql
 ```
 
 The amount os schema definitions will grow - AND be used in both production and testing.
-Therefore, schema and resolver definitions are moved to `src/utils/createSchema.ts`
+Therefore, schema and resolver definitions are moved to `src/graphql/utils/createSchema.ts`
 
-While re-arranging the code, `src/modules/user/User.resolver.ts` is provided to verify that everything still works:
+While re-arranging the code, `src/graphql/modules/user/User.resolver.ts` is provided to verify that everything still works:
 
 ```
 $ npm start
@@ -242,16 +242,16 @@ The end result is 2 methods providing me with what I need
 
 ## Create User mutation in GraphQL
 
-Modify `src/entity/User.ts`
+Modify `src/graphql/entity/User.ts`
 
 1. Add email, salt and password (using argon2id) to DB
 2. In order to make type-graphql understand the datastructure, add @ObjectType to entity
 3. add name (combined firstName & lastName) as a schema field which is not stored in DB ... just for the fun of it
 
 When project is growing, I'd like to maintain a structure in my filenames like `User.resolver.ts`, `User.test.ts` and so on...
-`src/modules/user/UserResolver.ts` is renamed to `src/modules/user/User.resolver.ts`
+`src/graphql/modules/user/UserResolver.ts` is renamed to `src/graphql/modules/user/User.resolver.ts`
 
-To verify password encryption/verification, add two temptorary methods to `src/modules/user/User.resolver.ts`
+To verify password encryption/verification, add two temptorary methods to `src/graphql/modules/user/User.resolver.ts`
 
 Mutation: `register(firstname, lastname, email, password)`
 
@@ -398,7 +398,7 @@ By the way: I don't really think `login` is a TypeGraphQL mutation - the databas
 
 ## Authenticated mutations and queries
 
-In order to authenticate queries (separate personal stuff from public access), `src/utils/isAuth` is added as a Middleware function.
+In order to authenticate queries (separate personal stuff from public access), `src/utils/middleware/isAuth` is added as a Middleware function.
 
 By adding authentication as middleware, the authentication is performed before the query/mutation takes place.
 
@@ -406,7 +406,7 @@ When accessing authenticated (personal) data, the user should be extracted from 
 
 ### Temporary TypeGraphQL Query: isAuthenticated - for testing purposes
 
-Since the token is accessed inside a middleware function, that runs _before_ the query/mutation (in a different scope), the token payload is now added to `src/utils/GraphqlContext.ts` in order to make payload content accessible to queries/mutations.
+Since the token is accessed inside a middleware function, that runs _before_ the query/mutation (in a different scope), the token payload is now added to `src/graphql/utils/GraphqlContext.ts` in order to make payload content accessible to queries/mutations.
 
 Note that payload is **optional** in `GraphqlContext` - after all, it should still be possible to access req/res inside publicly accessible queries/mutations.
 
@@ -429,7 +429,7 @@ One tiny addition: Now, the refreshToken cookie is going to be set 2 different p
 
 ### Beautify
 
-The intensions of isolating JWT to a single file nearly fell apart, a `jsonwebtoken.verify` call snug into `src/utils/isAuth.ts`.
+The intensions of isolating JWT to a single file nearly fell apart, a `jsonwebtoken.verify` call snug into `src/graphql/utils/middleware/isAuth.ts`.
 Lets beautify and strengthen TypeScript validation while we're at it...
 
 ## Revoke tokens for a user (change password)
@@ -540,7 +540,7 @@ Endpoint for receiving emails is going to be: http://{proces.env.DOMAIN}:{proces
 
 ## Reorganize TypeGaphQL Resolvers
 
-`src/modules/user/User.resolver.ts` is bloated by now.
+`src/graphql/modules/user/User.resolver.ts` is bloated by now.
 
 Testing will be added soon. Developing different tasks in parallel might cause messy version control. This project needs reorganizing to maintain order.
 
@@ -559,11 +559,11 @@ Queries/mutations:
 
 Most of this is just dev/test junk. Only `register` and `login` are ready to go into their own resolvers.
 
-- `src/modules/user/Login.resolver.ts`
-- `src/modules/user/Register.resolver.ts`
-- `src/modules/user/User.resolver.ts`
+- `src/graphql/modules/user/Login.resolver.ts`
+- `src/graphql/modules/user/Register.resolver.ts`
+- `src/graphql/modules/user/User.resolver.ts`
 
-`src/utils/createSchema.ts` is updated accordingly.
+`src/graphql/utils/createSchema.ts` is updated accordingly.
 
 ## Reset Password
 
@@ -577,6 +577,10 @@ Resetting password is where I would expect hackers to search for vulnerabilities
 
 - involve user email in order to protect against hijacking
 - reduce _window of opportunity_ to a short period of time
+  - stealing an old email (with a link) is not an option:
+    - link life span is limited to 1-2 days
+    - link can only be used once, when password is updated, the link becomes invalid
+  - session timeout on reset form - the time in which an attacker can try to steal and use a session
 
 That makes my process flow look like this:
 
@@ -589,8 +593,8 @@ That makes my process flow look like this:
 This _Reset Password_ endpoint is not just _any_ new endpoint, it has some extra restrictions:
 
 - it is unique to a specific user/email
-- it presents a password form to the user
-- it has a timeout - meaning that the form submit must include a JWT token
+- it presents a password form to the user, we need to make sure only the right person is allowed access
+- it has a session timeout - meaning that the form submit must include a JWT token
 
 Several tasks line up already.
 
@@ -603,9 +607,9 @@ Several tasks line up already.
 
 ### New process-flow
 
-- add **resetPasswordToken** with expiration time: 3 minutes (to type in password twice and click 'Update')
+- add **resetPasswordToken** with expiration time: 5 minutes (to type in password twice and click 'Update')
 - add **resetPasswordEmail** to `src/utils/sendEmail.ts`
-- new TypeGraphQL resolver to initiate _Reset Password_ flow: `src/modules/user/ResetPassword.resolver.ts`
+- new TypeGraphQL resolver to initiate _Reset Password_ flow: `src/graphql/modules/user/ResetPassword.resolver.ts`
 - add GET endpoint to provide user with _Reset Password_ form: http://localhost:4000/user/resetpwd/:uuid
   - resetPasswordToken is provided in a new cookie with options [{ httpOnly: true, sameSite: 'strict' }](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies)
   - password credentials are validated before 'Update' button is enabled (for now, simply that the two typed in passwords are the same)
@@ -630,7 +634,7 @@ This turned out to be more tricky than I expected.
    - add [cors](https://www.npmjs.com/package/cors) as middleware to express
 
 3. Authorization: an email link is activated. The client/browser is unknown, there's no entry conditions, like a cookie or something - starting point is the uuid in that email-link.
-   - create a cookie with resetToken (timeout is 3 minutes from the link is activated)
+   - create a cookie with resetToken (timeout is 5 minutes from the link is activated)
    - GET presents an Input Form to type password twice - 'Update' button is enabled when the password credentials are met (for now, typed values are equal)
    - create an XMLHttpRequest, send password to POST endpoint through that XMLHttpRequest-dialog
      - CORS options ensure that POST only receives request from one known domain: localhost:4000
@@ -664,6 +668,42 @@ POST request is handled by `src/utils/verifyPasswordReset.ts`:
 
 To me, the hard part here was definitely the http dialog - a combination of token, cookie, XmlHttp, Express middleware to provide security ... and of course (important) a smooth user dialog!!
 
-## TO DO: Automated test - Jest
+## Reorganize project - routes, controllers, middleware, graphql
 
-Inspired by [this tutorial](https://www.youtube.com/watch?v=fxYcbw56mbk&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=9).
+`src/index.ts` looks really messy by now. Time to introduce routers and controllers!
+
+Since I am going to have both REST and GraqphQL endpoints in one API, I want to collect GraphQL-specific content in `src/graphql`.
+
+I moved graphql specific utils to `src/graphql/utils` - I am not really sure if this is _too much_ splitting up or if it nice and clean... I guess it depends on the project size. Refactoring later on is always an option.
+
+Project folder structure is refactored into this:
+
+```
+src/
+    controllers/
+        users/
+    graphql/
+        entity/
+        migration/
+        modules
+            user/
+        utils/
+            middleware/
+    routes/
+        users/
+    utils/
+        middleware/
+    index.ts
+```
+
+Endpoints in `src/index.ts` are reorganized (removed from index.ts)
+
+- Routes are placed in `src/routes/`
+- controllers are placed in `src/controllers/`
+- endpoint constants are removed from `src/utils/sendEmails.ts`, they are now exported from `src/routes/user/index.ts`
+- authorization (non-graphql) is reorganized and added to express endpoints as route-level middleware: `src/utils/middleware/isAuth.ts`
+
+Other minor changes:
+
+- Reset Password cookie timeout: 5 minutes
+- Reset Password form timeout - resetPasswordTimeout() added to form

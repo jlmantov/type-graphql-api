@@ -1,7 +1,8 @@
 import { Arg, Mutation, Resolver } from "type-graphql";
+import { CONFIRMUSER } from "../../../routes/user";
+import { hash } from "../../../utils/crypto";
+import { sendUserEmail } from "../../../utils/sendEmail";
 import { User } from "../../entity/User";
-import { hash } from "../../utils/crypto";
-import { CONFIRMUSER, sendUserEmail } from "../../utils/sendEmail";
 
 @Resolver()
 export class RegisterResolver {

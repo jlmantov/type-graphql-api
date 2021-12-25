@@ -1,7 +1,7 @@
 import { Arg, Ctx, Field, ObjectType, Query, Resolver } from "type-graphql";
-import { User } from "../../entity/User";
-import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../utils/auth";
-import { verifyPwd } from "../../utils/crypto";
+import { User } from "../../../graphql/entity/User";
+import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../../utils/auth";
+import { verifyPwd } from "../../../utils/crypto";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 
 /**

@@ -1,7 +1,7 @@
 import { MiddlewareFn } from "type-graphql";
-import { User } from "../entity/User";
-import { getJwtPayload, JwtAccessPayload } from "./auth";
-import { GraphqlContext } from "./GraphqlContext";
+import { getJwtPayload, JwtAccessPayload } from "../../../utils/auth";
+import { User } from "../../entity/User";
+import { GraphqlContext } from "../GraphqlContext";
 
 /**
  * The user is expected to include a request header called authorization formatted like this:
@@ -9,7 +9,7 @@ import { GraphqlContext } from "./GraphqlContext";
  * @param context where request is available
  * @param next
  */
-export const isAuth: MiddlewareFn<GraphqlContext> = async ({ context }, next) => {
+export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next) => {
   const authorization = context.req.headers["authorization"];
 
   if (!authorization) {
