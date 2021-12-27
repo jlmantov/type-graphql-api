@@ -8,12 +8,12 @@
   "charset": "utf8_danish_ci",
   "synchronize": true,
   "logging": "all",
-  "entities": ["src/graphql/entity/**/*.ts"],
-  "migrations": ["src/graphql/migration/**/*.ts"],
-  "subscribers": ["src/graphql/subscriber/**/*.ts"],
+  "entities": ["src/orm/entity/**/*.ts"],
+  "migrations": ["src/orm/migration/**/*.ts"],
+  "subscribers": ["src/orm/subscriber/**/*.ts"],
   "cli": {
-    "entitiesDir": "src/graphql/entity",
-    "migrationsDir": "src/graphql/migration",
-    "subscribersDir": "src/graphql/subscriber"
+    "entitiesDir": "src/orm/entity",
+    "migrationsDir": "src/orm/migration",
+    "subscribersDir": "src/orm/subscriber"
   }
 }

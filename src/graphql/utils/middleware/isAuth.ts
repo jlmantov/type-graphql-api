@@ -1,6 +1,6 @@
 import { MiddlewareFn } from "type-graphql";
+import { User } from "../../../orm/entity/User";
 import { getJwtPayload, JwtAccessPayload } from "../../../utils/auth";
-import { User } from "../../entity/User";
 import { GraphqlContext } from "../GraphqlContext";
 
 /**

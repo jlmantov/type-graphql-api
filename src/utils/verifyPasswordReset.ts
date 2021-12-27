@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { validate as uuidValidate } from "uuid";
-import { User } from "../graphql/entity/User";
-import { UserEmail } from "../graphql/entity/UserEmail";
+import { User } from "../orm/entity/User";
+import { UserEmail } from "../orm/entity/UserEmail";
 import { RESETPWD } from "../routes/user";
 import { getJwtPayload, JwtResetPayload } from "./auth";
 import { hash } from "./crypto";

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { v4 } from "uuid";
-import { User } from "../graphql/entity/User";
-import { UserEmail } from "../graphql/entity/UserEmail";
+import { User } from "../orm/entity/User";
+import { UserEmail } from "../orm/entity/UserEmail";
 import { CONFIRMUSER, RESETPWD } from "../routes/user";
 import { createResetPasswordToken } from "./auth";
 import { resetPasswordHtml } from "./resetPasswordForm";

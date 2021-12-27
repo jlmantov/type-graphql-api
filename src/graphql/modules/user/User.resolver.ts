@@ -1,9 +1,9 @@
 import { Arg, Ctx, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import { getConnection } from "typeorm";
+import { User } from "../../../orm/entity/User";
+import { UserEmail } from "../../../orm/entity/UserEmail";
 import { revokeRefreshTokens } from "../../../utils/auth";
 import { verifyPwd } from "../../../utils/crypto";
-import { User } from "../../entity/User";
-import { UserEmail } from "../../entity/UserEmail";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuthGql } from "../../utils/middleware/isAuth";
 

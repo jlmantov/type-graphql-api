@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { User } from "../../graphql/entity/User";
+import { User } from "../../orm/entity/User";
 import { getJwtPayload, JwtAccessPayload } from "../auth";
 
 /**

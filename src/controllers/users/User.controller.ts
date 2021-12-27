@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { User } from "../../graphql/entity/User";
+import { User } from "../../orm/entity/User";
 import { confirmUserEmail, resetPasswordForm } from "../../utils/sendEmail";
 import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
 

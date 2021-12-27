@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import jwt, { SignOptions, verify } from "jsonwebtoken";
 import { getConnection } from "typeorm";
-import { User } from "../graphql/entity/User";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
+import { User } from "../orm/entity/User";
 
 export interface JwtAccessPayload {
   bit: string; // userId

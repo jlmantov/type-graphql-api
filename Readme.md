@@ -242,7 +242,7 @@ The end result is 2 methods providing me with what I need
 
 ## Create User mutation in GraphQL
 
-Modify `src/graphql/entity/User.ts`
+Modify `src/orm/entity/User.ts`
 
 1. Add email, salt and password (using argon2id) to DB
 2. In order to make type-graphql understand the datastructure, add @ObjectType to entity
@@ -674,21 +674,24 @@ To me, the hard part here was definitely the http dialog - a combination of toke
 
 Since I am going to have both REST and GraqphQL endpoints in one API, I want to collect GraphQL-specific content in `src/graphql`.
 
-I moved graphql specific utils to `src/graphql/utils` - I am not really sure if this is _too much_ splitting up or if it nice and clean... I guess it depends on the project size. Refactoring later on is always an option.
+Having REST endpoints also makes it relevant to distinguish between ORM and GraphQL.
 
-Project folder structure is refactored into this:
+GraphQL specific utils is moved to `src/graphql/utils` - I am not really sure if this is _too much_ splitting up or if it's nice and clean... I guess it depends on the project size. Refactoring is always an option.
+
+New project folder structure is this:
 
 ```
 src/
     controllers/
         users/
     graphql/
-        entity/
-        migration/
         modules
             user/
         utils/
             middleware/
+    orm/
+        entity/
+        migration/
     routes/
         users/
     utils/
