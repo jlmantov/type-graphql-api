@@ -60,13 +60,13 @@ export class UserResolver {
    */
   @Query(() => String) // Tell type-graphql that return value is of type String
   @UseMiddleware(isAuthGql)
-  isAuthenticated(@Ctx() { payload }: GraphqlContext): String {
+  isAuthenticated(@Ctx() { user }: GraphqlContext): String {
     // tell TypeScript that isAuthenticated returns a String
 
     // By adding authentication as middleware, the authentication is performed before the query takes place.
-    // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
-    console.log(`isAuthenticated: userId ${payload!.bit} is authenticated!`);
-    return `userId ${payload!.bit} is authenticated!`;
+    // since isAuth is going to throw an error if user is missing, we can access user directly from here
+    console.log(`isAuthenticated: userId ${user!.id} is authenticated!`);
+    return `userId ${user!.id} is authenticated!`;
   }
 
   /**
@@ -78,8 +78,6 @@ export class UserResolver {
   @Mutation(() => Boolean) // Tell type-graphql that return value is of type Boolean
   @UseMiddleware(isAuthGql)
   async revokeTokens(@Ctx() ctx: GraphqlContext) {
-    // By adding authentication as middleware, the authentication is performed before the query takes place.
-    // since isAuth is going to throw an error if payload is missing, we can access payload directly from here
     return await revokeRefreshTokens(ctx);
   }
 

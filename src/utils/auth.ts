@@ -102,8 +102,14 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   }
 
   let payload: JwtRefreshPayload | null = null;
+  const reqUsr = {
+    id: 0,
+    tokenVersion: -1,
+  };
   try {
     payload = verify(token, process.env.JWT_REFRESH_TOKEN_SECRET!) as JwtRefreshPayload;
+    reqUsr.id = parseInt(payload!.kew, 10);
+    reqUsr.tokenVersion = payload.tas;
   } catch (error) {
     console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
     res.clearCookie("jid");
@@ -111,14 +117,13 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   }
 
   //  token is valid and we can return an accessToken
-  const userId = parseInt(payload!.kew, 10);
-  const user = await User.findOne({ id: userId });
+  const user = await User.findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
     return res.send({ ok: false, accessToken: "", error: "System error!" });
   }
 
-  if (user.tokenVersion !== payload.tas) {
+  if (user.tokenVersion !== reqUsr.tokenVersion) {
     // If user has forgotten password/changed password or for some reason decides to invalidate existing sessions,
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
@@ -162,15 +167,17 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
  * @returns Promise of type boolean - true if increment on db tokenVersion  affected 1 row, false otherwise
  */
 export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean> => {
+  // By adding authentication as middleware, the authentication is performed before the query takes place.
+  // since isAuth is going to throw an error if user is missing, we can access user directly from here
   const result = await getConnection()
     .getRepository(User)
-    .increment({ id: parseInt(ctx.payload!.bit, 10) }, "tokenVersion", 1); // accessToken.bit = userId
+    .increment({ id: ctx.user!.id }, "tokenVersion", 1); // accessToken.bit = userId
   if (result.affected !== 1) {
     return false;
   }
 
   // In order to avoid loking up user on every isAuth request, increment context directly
-  ctx.payload!.ogj = parseInt(ctx.payload!.ogj.toString(), 10) + 1;
+  ctx.user!.tokenVersion += 1;
   ctx.res.clearCookie("jid");
 
   console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);

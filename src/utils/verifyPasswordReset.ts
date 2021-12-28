@@ -7,7 +7,7 @@ import { getJwtPayload, JwtResetPayload } from "./auth";
 import { hash } from "./crypto";
 
 /**
- * Verify input from 'Reset password' response. Is all is fine, update hashedPassword in DB
+ * Verify input from 'Reset password' response. If all is fine, update hashedPassword in DB
  * Maximize security by combining different input:
  * 1. url param uuid is used to validate userEmail.reason
  * 2. token payload.exp is matched against UserEmail.createdAt to verify 'window of opportunity'
@@ -43,20 +43,24 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
 
   //   validate token
   let payload: JwtResetPayload | undefined = undefined;
-  let pUserId: string = "";
-  let pTokenVersion: number = -1;
+  let reqUsr = {
+    id: 0,
+    tokenVersion: -1,
+  };
   try {
     const token = req.cookies.roj;
     // resetPayload = { plf: user.id, rnl: user.tokenVersion };
     payload = getJwtPayload(token) as JwtResetPayload; // verified attribute userId
-    pUserId = payload.plf;
-    pTokenVersion = payload.rnl;
+    reqUsr = {
+      id: parseInt(payload.plf, 10),
+      tokenVersion: payload.rnl
+    }
   } catch (error) {
-    throw error; // propagate possible token verification error from 'deeper layers'
+    console.log("Invalid token payload: ", error); // log token verification error
+    throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  if (!payload.plf || !payload.rnl) {
-    // throw new Error("Invalid token payload!");
+  if (!reqUsr.id || reqUsr.tokenVersion < 0) {
     throw new Error("Expired or invalid input!"); // anonymous error, user might be looking for a vulnerabilities
   }
 
@@ -80,9 +84,9 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   // console.log("User.findOne: ", { id: pUserId, email: userEmail.email, tokenVersion: pTokenVersion, confirmed: true });
   const user = await User.findOne({
     where: {
-      id: pUserId,
+      id: reqUsr.id,
       email: userEmail.email,
-      tokenVersion: pTokenVersion,
+      tokenVersion: reqUsr.tokenVersion,
       confirmed: true,
     },
   });
