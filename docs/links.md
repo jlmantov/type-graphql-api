@@ -48,8 +48,9 @@ I have also thought about [how to organize and store accounts, emails and person
 
 ### Test
 
+- [JEST - Getting started](https://jestjs.io/docs/getting-started)
 - [JEST - a JavaScript Testing Framework](https://jestjs.io/docs/27.0/api)
-ts-jest - [Github Docs](https://kulshekhar.github.io/ts-jest/docs/) - [npm](https://www.npmjs.com/package/ts-jest)
+- [ts-jest - Github Docs](https://kulshekhar.github.io/ts-jest/docs/) - [npm](https://www.npmjs.com/package/ts-jest)
 - [faker.js - generate fake data in the browser and node.js](https://www.npmjs.com/package/faker)
 - [RIP Tutorial - jest (ts-jest)](https://riptutorial.com/typescript/example/29207/jest--ts-jest-)
 - [Node.js (Express) with TypeScript, Eslint, Jest, Prettier and Husky - Part 3](https://dev.to/ornio/node-js-express-with-typescript-eslint-jest-prettier-and-husky-part-3-1l8c)

@@ -17,6 +17,7 @@
 - [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
 - [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#reorganize-project---routes-controllers-middleware-graphql)
+- [Automated test - Jest](https://github.com/jlmantov/type-graphql-api#automated-test---jest)
 
 ## Motivation
 
@@ -710,3 +711,108 @@ Other minor changes:
 
 - Reset Password cookie timeout: 5 minutes
 - Reset Password form timeout - resetPasswordTimeout() added to form
+
+# Automated test - Jest
+
+Inspired by [this tutorial](https://www.youtube.com/watch?v=fxYcbw56mbk&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=9).
+
+## Motivation
+
+Overall goal is to reach almost 100% code coverage (being flexible and reasonable).
+
+Part of the agile mindset is:
+
+1. build what is necessary - not more than that
+2. refactor in allignment with new requirements
+
+Unittesting with 100% code coverage is vital to refactoring on-the-fly.
+
+## Setup environment
+
+- Ensure a well defined starting point
+
+  - use a testing database that doesn't mess up data related to production, staging, development or demo
+  - reset testing database on new test-run
+
+- Cover all endpoints
+
+  - GET "/user/confirm/:id"
+  - POST "/renew_accesstoken"
+  - GET "/user/resetpwd/:id"
+  - POST "/user/resetpwd/:id"
+  - GraphQL endpoints
+  - REST endpoints
+
+- Add utils testing where needed - or if it helps better understanding
+
+### Docker database setup
+
+Create test-DB and add needed privileges to DB-user:
+
+1. Open database conection, <span style="text-decoration: underline">Login as root</span>
+2. create new database: 'sandbox-test'
+3. manage user access rights, select user 'user'
+   - add new object: database 'sandbox-test'
+   - grant all rights except for GRANT
+   - save and close user management
+
+Databases 'sandbox' and 'sandbox-test' are now available in the same docker container on localhost.
+
+### TypeGraphQL Testing [using ts-jest](https://www.npmjs.com/package/ts-jest)
+
+```
+$ npm i -D typescript jest ts-jest @types/jest
+$ npx ts-jest config:init
+```
+
+### test-utils
+
+1. `src/test-utils/testConn.ts`
+2. `src/test-utils/resetTestDB.ts`
+3. `src/test-utils/gqlCall.ts`
+
+To run tests in a separate database, a new `createConnection` is added in `testConn.ts`. Configuration options include both 'synchronize: true' and 'dropSchema: true'.
+
+Database reset with package.json commands are enabled by adding `resetTestDB.ts`.
+
+The GraphQL schema is called directly during tests (easiest way to test resolvers). To reduce redundancy, setting up graphql(...) is placed in the helper-functiong: `gqlCall.ts`.
+
+### Testing - Commands in package.json
+
+Reset database before running unittests (creating test coverage reports):
+
+> `npm run resetdb`
+
+Run unittests once:
+
+> `npm run test`
+
+Variations to be used during development:
+
+- `npm run test -- --watchAll` - Add the 'watchAll' flag and run tests automatically when files are changed
+- `npm run test -- --coverage` - Add 'coverage' flags to create a test coverage report
+- `npm run test -- --watchAll --coverage` - Add both 'watchAll' and 'coverage flags during development
+
+Reset database, run unittests once and create a test coverage report:
+
+> `npm run coverage`
+
+### Random testdata using [faker](https://www.npmjs.com/package/faker)
+
+```
+$ npm i -D faker @types/faker
+```
+
+
+### `src/test-utils/gqlCall.test.ts`
+
+This might be redundant since resolver testing most likely will provide 100% code coverage (or very close).
+
+I still choose to add it since it helps my understanding and provides a systematic walk-through of the helper-function.
+
+
+### First GraphQL resolver Test
+
+The basic test setup is verified by `src/graphql/modules/Register.test.ts`. Authorization is added later on.
+
+

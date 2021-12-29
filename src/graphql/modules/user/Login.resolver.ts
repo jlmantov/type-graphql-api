@@ -6,6 +6,7 @@ import { GraphqlContext } from "../../utils/GraphqlContext";
 
 /**
  * login returns a token in GraphQL, so we need to let TypeGraphQL know about it - so it becomes an @ObjectType
+ * https://typegraphql.com/docs/extensions.html#using-the-extensions-decorator
  */
 @ObjectType()
 class LoginResponse {

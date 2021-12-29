@@ -4,7 +4,7 @@ import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 /**
  * use the BaseEntity (from TypeORM) to do .save() etc...
  * (Active Record Pattern)
- * @ObjectType makes this type available to GraphQL
+ * @ObjectType makes this type available to GraphQL - https://typegraphql.com/docs/extensions.html#using-the-extensions-decorator
  * @Field tells GraphQL which fields is allowed to query for. Notice that the password is left out
  */
 @ObjectType()
