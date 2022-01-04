@@ -758,26 +758,14 @@ Create test-DB and add needed privileges to DB-user:
 
 Databases 'sandbox' and 'sandbox-test' are now available in the same docker container on localhost.
 
-### TypeGraphQL Testing [using ts-jest](https://www.npmjs.com/package/ts-jest)
+## Testing [using ts-jest](https://www.npmjs.com/package/ts-jest)
 
 ```
 $ npm i -D typescript jest ts-jest @types/jest
 $ npx ts-jest config:init
 ```
 
-### test-utils
-
-1. `src/test-utils/testConn.ts`
-2. `src/test-utils/resetTestDB.ts`
-3. `src/test-utils/gqlCall.ts`
-
-To run tests in a separate database, a new `createConnection` is added in `testConn.ts`. Configuration options include both 'synchronize: true' and 'dropSchema: true'.
-
-Database reset with package.json commands are enabled by adding `resetTestDB.ts`.
-
-The GraphQL schema is called directly during tests (easiest way to test resolvers). To reduce redundancy, setting up graphql(...) is placed in the helper-functiong: `gqlCall.ts`.
-
-### Testing - Commands in package.json
+### Commands in package.json
 
 Reset database before running unittests (creating test coverage reports):
 
@@ -803,6 +791,22 @@ Reset database, run unittests once and create a test coverage report:
 $ npm i -D faker @types/faker
 ```
 
+## First GraphQL resolver Test - Register
+
+The basic GraphQL test setup is verified by `src/graphql/modules/Register.test.ts`.
+
+
+### test-utils
+
+1. `src/test-utils/testConn.ts`
+2. `src/test-utils/resetTestDB.ts`
+3. `src/test-utils/gqlCall.ts`
+
+To run tests in a separate database, a new `createConnection` is added in `testConn.ts`. Configuration options include both 'synchronize: true' and 'dropSchema: true'.
+
+Database reset with package.json commands are enabled by adding `resetTestDB.ts`.
+
+The GraphQL schema is called directly during tests (easiest way to test resolvers). To reduce redundancy, setting up graphql(...) is placed in the helper-functiong: `gqlCall.ts`.
 
 ### `src/test-utils/gqlCall.test.ts`
 
@@ -810,9 +814,15 @@ This might be redundant since resolver testing most likely will provide 100% cod
 
 I still choose to add it since it helps my understanding and provides a systematic walk-through of the helper-function.
 
+## REST endpoint Testing: GET landing page + POST Renew accessToken
 
-### First GraphQL resolver Test
+Separate app.ts from `src/index.ts` in order to use `src/app.ts` in test suites.
 
-The basic test setup is verified by `src/graphql/modules/Register.test.ts`. Authorization is added later on.
+Install [SuperTest](https://www.npmjs.com/package/supertest)
 
+```
+$ npm i -D supertest @types/supertest
+```
+
+The basic REST test setup is verified by testing the landing page in `src/routes/routes.test.ts`.
 

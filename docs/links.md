@@ -9,10 +9,14 @@
 ## Articles/guidelines
 
 ### Organizing project folders
+
 I intend to organize my project folder structure, following this pattern: [Fractal — A react app structure for infinite scale](https://hackernoon.com/fractal-a-react-app-structure-for-infinite-scale-4dab943092af)
 
 I have also thought about [how to organize and store accounts, emails and personal settings](./userprofile-howto.md)
 
+### Coding Best Practices
+
+- [Dev.to: Node.js best practices list (July 2021)](https://dev.to/alexandrefreire/node-js-best-practices-list-july-2021-3p4k)
 
 ### Development
 
@@ -44,8 +48,6 @@ I have also thought about [how to organize and store accounts, emails and person
 
 - [Nodemailer](https://nodemailer.com/about/)
 
-
-
 ### Test
 
 - [JEST - Getting started](https://jestjs.io/docs/getting-started)
@@ -55,10 +57,13 @@ I have also thought about [how to organize and store accounts, emails and person
 - [RIP Tutorial - jest (ts-jest)](https://riptutorial.com/typescript/example/29207/jest--ts-jest-)
 - [Node.js (Express) with TypeScript, Eslint, Jest, Prettier and Husky - Part 3](https://dev.to/ornio/node-js-express-with-typescript-eslint-jest-prettier-and-husky-part-3-1l8c)
 - [Testing Typescript Api With Jest and Supertest](https://tutorialedge.net/typescript/testing-typescript-api-with-jest/)
+- [Sam Meech-Ward - Testing Node Server with Jest and Supertest](https://www.youtube.com/watch?v=FKnzS_icp20)
 
-
+- [Alex Losikov: Part 4. Node.js + Express + TypeScript: Unit Tests with Jest](https://losikov.medium.com/part-4-node-js-express-typescript-unit-tests-with-jest-5204414bf6f0)
+- [Testing NodeJs/Express API with Jest and Supertest](https://dev.to/nedsoft/testing-nodejs-express-api-with-jest-and-supertest-1km6)
 
 ## Considerations with regard to Cookie vs. JWT token
+
 I consider JWT the most common way of authenticating users - that alone is a strong reason why to choose this approach.
 
 I'd still like to know the alternatives and their consequences - in order to choose direction!
@@ -66,22 +71,19 @@ I'd still like to know the alternatives and their consequences - in order to cho
 - I find this article useful: [Web Authentication: Cookies vs. Tokens](https://blog.bitsrc.io/web-authentication-cookies-vs-tokens-8e47d5a96d34)
 - and this tutorial: GraphQL Typescript Server Boilerplate - [Ben Awad](https://www.youtube.com/playlist?list=PLN3n1USn4xlky9uj6wOhfsPez7KZOqm2V)
 
-
 ### The Cookie approach
+
 - [dev.to: How to easily implement Authentication with GraphQL and Redis](https://dev.to/lastnameswayne/how-to-implement-authentication-with-graphql-and-redis-1k1b)
 - [Redis with Node.js (ioredis)](https://docs.redis.com/latest/rs/references/client_references/client_ioredis/)
 - [npm ioredis](https://www.npmjs.com/package/ioredis)
 
 Let's face it, a session table in a database is also a useful option - as an alternative to introducing Redis. Many solutions work really well this way (added complexity comes with a cost).
 
-
 Considering that JWT saves me from session storage, I choose to carry on with JWT.
-
-
 
 ## Authentication and Authorization
 
-- Google Clod - [13 best practices for user account, authentication, and password management, 2021 edition](https://cloud.google.com/blog/products/identity-security/account-authentication-and-password-management-best-practices)
+- [Google Clod: 13 best practices for user account, authentication, and password management, 2021 edition](https://cloud.google.com/blog/products/identity-security/account-authentication-and-password-management-best-practices)
 
 - OWASP Cheet Sheet Series - [Password Storage Cheat Sheet #argon2id](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id)
 - OWASP Cheet Sheet Series - [Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
@@ -100,10 +102,8 @@ Considering that JWT saves me from session storage, I choose to carry on with JW
 
 - MDN Web Docs - [Securing your site](https://developer.mozilla.org/en-US/docs/Web/Security/Securing_your_site)
 
-
 - OWASP Cheet Sheet Series - [Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - OWASP Cheet Sheet Series - [Authorization Testing Automation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Testing_Automation_Cheat_Sheet.html)
 - OWASP Cheet Sheet Series - [Forgot Password Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html)
 - OWASP Cheet Sheet Series - [Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
 - OWASP article - [Handle all Errors and Exceptions](https://owasp.org/www-project-proactive-controls/v3/en/c10-errors-exceptions.html)
-

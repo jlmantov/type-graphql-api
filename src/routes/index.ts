@@ -7,14 +7,16 @@ const router = express.Router();
 router.use("/", cookieParser());
 
 /**
- * landing page
+ * GET "/" - landing page
  */
 router.get("/", (_req, res) => res.send("hello")); // send 'hello' to http://localhost:4000/
 
 /**
  * POST "/renew_accesstoken" - requires cookie with refreshToken.
  */
-router.post("/renew_accesstoken", async (req, res) => handleJwtRefreshTokenRequest(req, res));
+router.post("/renew_accesstoken", async (req, res) => {
+  handleJwtRefreshTokenRequest(req, res);
+});
 
 /**
  * users
