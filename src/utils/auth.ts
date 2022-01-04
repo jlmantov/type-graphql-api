@@ -98,7 +98,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   const token = req.cookies.jid;
   if (!token) {
     res.clearCookie("jid");
-    return res.send({ ok: false, accessToken: "", error: "Access denied!" });
+    return res.status(400).send({ accessToken: "", error: "Access denied!" });
   }
 
   let payload: JwtRefreshPayload | null = null;
@@ -113,14 +113,14 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   } catch (error) {
     console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
     res.clearCookie("jid");
-    return res.send({ ok: false, accessToken: "", error: error.message });
+    return res.status(400).send({ accessToken: "", error: error.message });
   }
 
   //  token is valid and we can return an accessToken
   const user = await User.findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
-    return res.send({ ok: false, accessToken: "", error: "System error!" });
+    return res.status(400).send({ accessToken: "", error: "System error!" });
   }
 
   if (user.tokenVersion !== reqUsr.tokenVersion) {
@@ -128,7 +128,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
     res.clearCookie("jid");
-    return res.send({
+    return res.status(400).send({
       ok: false,
       accessToken: "",
       error: "refreshToken expired, please login again!",
@@ -139,7 +139,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   const refreshToken = await createRefreshToken(user);
   sendRefreshToken(res, refreshToken);
 
-  return res.send({ ok: true, accessToken: await createAccessToken(user) });
+  return res.status(200).send({ accessToken: await createAccessToken(user) });
 };
 
 /**
