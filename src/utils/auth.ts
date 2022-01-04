@@ -111,7 +111,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     reqUsr.id = parseInt(payload!.kew, 10);
     reqUsr.tokenVersion = payload.tas;
   } catch (error) {
-    console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
+    // console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
     res.clearCookie("jid");
     return res.status(400).send({ accessToken: "", error: error.message });
   }
@@ -128,11 +128,9 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
     res.clearCookie("jid");
-    return res.status(400).send({
-      ok: false,
-      accessToken: "",
-      error: "refreshToken expired, please login again!",
-    });
+    return res
+      .status(400)
+      .send({ accessToken: "", error: "refreshToken expired, please login again!" });
   }
 
   // update refreshToken as well

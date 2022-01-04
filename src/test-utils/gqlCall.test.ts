@@ -74,7 +74,7 @@ describe("gqlCall test-util", () => {
     if (alreadyExist && alreadyExist.email === johnDoe.email) {
       // During development, using `jest --watchAll`, the database will not be reset on every run.
       // This will allow continuous runs and stop jest from reporting an error that really isn't an error
-      console.log("John Doe found in DB, skipping this test.");
+      // console.log("John Doe found in DB, skipping this test.");
     } else {
       // console.log("John Doe not found!");
       const response = await gqlCall({
