@@ -43,6 +43,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
     // 'isAuth: TokenExpiredError - jwt expired!'
     // 'isAuth: JsonWebTokenError - <token> malformed!'
     // 'isAuth: JsonWebTokenError - invalid signature!'
+    console.log("isAuth: " + error.name + " - " + error.message);
     throw error;
   }
 

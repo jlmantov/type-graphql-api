@@ -10,7 +10,7 @@ import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
  */
 export const users_get = async (_req: Request, res: Response) => {
   const users = await User.find();
-  console.log("route users: ", users);
+  // console.log("route users: ", users);
 
   res.status(200).json({ users: users });
 };
@@ -21,7 +21,7 @@ export const users_get = async (_req: Request, res: Response) => {
  * @param res
  */
 export const user_confirmEmail_get = async (req: Request, res: Response) => {
-  console.log("GET /user/confirm/ called with req.headers: ", JSON.stringify(req.headers, null, 2));
+  // console.log("GET /user/confirm/ called with req.headers: ", JSON.stringify(req.headers, null, 2));
   confirmUserEmail(req, res);
 };
 

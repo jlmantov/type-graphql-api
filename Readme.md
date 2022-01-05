@@ -795,7 +795,6 @@ $ npm i -D faker @types/faker
 
 The basic GraphQL test setup is verified by `src/graphql/modules/Register.test.ts`.
 
-
 ### test-utils
 
 1. `src/test-utils/testConn.ts`
@@ -824,5 +823,18 @@ Install [SuperTest](https://www.npmjs.com/package/supertest)
 $ npm i -D supertest @types/supertest
 ```
 
-The basic REST test setup is verified by testing the landing page in `src/routes/routes.test.ts`.
+The basic REST test setup is verified by `src/routes/routes.test.ts`.
+
+### User test - `src/routes/user/index.ts`
+
+Next step is adding `src/routes/user/user.test.ts`.
+
+User endpoint testing shows clearly that authorization works but the response is unacceptable:
+ - http statuscode 500 is not what I want on 'unauthorized' or 'access denied' responses
+ - An error message with a stacktrace should never be visible to the client
+
+Errorhandling as middleware is needed.
+
+### Authorization and errorhandling
+
 

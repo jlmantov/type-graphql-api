@@ -51,7 +51,7 @@ router.get("/" + RESETPWD + "/:id", newPasswordForm_get);
 router.get("/" + CONFIRMUSER + "/:id", user_confirmEmail_get);
 
 /**
- * GET /user/ - requires JWT accessToken
+ * GET "/user/" - requires JWT accessToken
  */
 router.get("/", isAuth, users_get);
 
