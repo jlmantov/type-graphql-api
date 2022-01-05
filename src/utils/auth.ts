@@ -3,6 +3,7 @@ import jwt, { SignOptions, verify } from "jsonwebtoken";
 import { getConnection } from "typeorm";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 import { User } from "../orm/entity/User";
+import HttpError from "./httpError";
 
 export interface JwtAccessPayload {
   bit: string; // userId
@@ -148,10 +149,10 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
   try {
     const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
     if (!jwtPayload) {
-      throw new Error("Unknown token!");
+      throw new HttpError(401, "JsonWebTokenError", "Invalid token");
     }
     if (!(jwtPayload.bit || jwtPayload.plf)) {
-      throw new Error("Invalid token!");
+      throw new HttpError(401, "JsonWebTokenError", "Invalid token");
     }
     return jwtPayload;
   } catch (error) {

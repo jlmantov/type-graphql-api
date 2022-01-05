@@ -88,7 +88,7 @@ describe("Register resolver", () => {
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);
-    expect(response.errors![0].message).toEqual("Error: user already exist!");
+    expect(response.errors![0].message).toEqual("User already exist");
   });
 
   /**

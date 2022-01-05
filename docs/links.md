@@ -42,6 +42,7 @@ I have also thought about [how to organize and store accounts, emails and person
 - [Making a CORS Request - HTML5 Rocks](https://www.html5rocks.com/en/tutorials/cors//)
 - [Express cors middleware](https://expressjs.com/en/resources/cors.html)
 - [MDN Express Tutorial Part 4: Routes and controllers](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/routes)
+- [wanago.io: TypeScript Express tutorial #3. Error handling and validating incoming data](https://wanago.io/2018/12/17/typescript-express-error-handling-validation/)
 
 - [body-parser](https://www.npmjs.com/package/body-parser)
 - [graphql-tag](https://www.npmjs.com/package/graphql-tag)

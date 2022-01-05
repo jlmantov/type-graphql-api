@@ -2,6 +2,7 @@ import { Arg, Ctx, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { User } from "../../../orm/entity/User";
 import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../../utils/auth";
 import { verifyPwd } from "../../../utils/crypto";
+import HttpError from "../../../utils/httpError";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 
 /**
@@ -26,7 +27,7 @@ export class LoginResolver {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      throw new Error("Invalid email or password!");
+      throw new HttpError(403, "AuthorizationError", "Invalid email or password");
     }
 
     let validated = false;
@@ -37,11 +38,15 @@ export class LoginResolver {
     }
 
     if (!validated) {
-      throw new Error("Invalid username or password!");
+      throw new HttpError(403, "AuthorizationError", "Invalid username or password");
     }
 
     if (!user.confirmed) {
-      throw new Error("Email needs to be confirmed in order to enable login!");
+      throw new HttpError(
+        403,
+        "AuthorizationError",
+        "Email needs to be confirmed in order to enable login!"
+      );
     }
 
     // login successful, no create 1. refresh token and 2. access token

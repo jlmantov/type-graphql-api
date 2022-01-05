@@ -2,6 +2,7 @@ import { Arg, Mutation, Resolver } from "type-graphql";
 import { User } from "../../../orm/entity/User";
 import { CONFIRMUSER } from "../../../routes/user";
 import { hash } from "../../../utils/crypto";
+import HttpError from "../../../utils/httpError";
 import { sendUserEmail } from "../../../utils/sendEmail";
 
 @Resolver()
@@ -18,7 +19,7 @@ export class RegisterResolver {
     // first of all, find out if email is already in the database
     const registeredUser = await User.findOne({ where: { email } });
     if (registeredUser) {
-      throw new Error("Error: user already exist!"); // avoid duplicates
+      throw new HttpError(400, "BadRequestError", "User already exist"); // avoid duplicates
     }
 
     // encrypt the password (keep it a secret)
@@ -31,7 +32,7 @@ export class RegisterResolver {
     }).save();
 
     if (!user) {
-      throw new Error("Error: unable to create user!"); // some unhandled error - net, connection, DB, disc whatever ...
+      throw new HttpError(500, "InternalServerError", "Unable to create user"); // some unhandled error - net, connection, DB, disc whatever ...
     }
 
     // make user confirm email before login is enabled

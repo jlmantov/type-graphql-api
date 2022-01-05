@@ -836,6 +836,14 @@ User endpoint testing shows clearly that authorization works but the response is
 - http statuscode 500 is not what I want on 'unauthorized' or 'access denied' responses
 - An error message with a stacktrace should never be visible to the client
 
-Errorhandling as middleware is needed.
+Errorhandling [as middleware](https://wanago.io/2018/12/17/typescript-express-error-handling-validation/) is needed.
 
 ### Authorization and errorhandling
+
+1. An Error extension helper class, `src/utils/httpError.ts`, is created in order to add HTTP status whenever an error is thrown
+
+2. Express errorMiddleware is provided in `src/utils/middleware/error.ts`
+
+3. Middleware is applied last in the middleware chain in `src/app.ts`
+
+4. All error handling is converted to use the new `HttpError`

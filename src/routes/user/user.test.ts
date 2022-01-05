@@ -33,9 +33,9 @@ describe("User", () => {
   describe("GET /user/", () => {
     test("should fail on missing authentication header", async () => {
       const res = await request(app).get("/user").send(); // no authentication header
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("Access denied!");
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.text).toEqual("Not authenticated");
     });
 
     test("should fail on authentication header with expired accessToken", async () => {
@@ -47,11 +47,9 @@ describe("User", () => {
         .get("/user")
         .set("Authorization", "bearer " + accessToken)
         .send(); // no authentication header
-      // console.log("response: ", JSON.stringify(res, null, 2));
 
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("Access denied!");
+      expect(res.statusCode).toEqual(403);
+      expect(res.text).toEqual("Access expired, please login again");
     });
 
     test("should succeed on authentication header with valid accessToken", async () => {
@@ -78,7 +76,6 @@ describe("User", () => {
       //     },
       //     :
       //   ]
-      // console.log("response: ", res.body);
       expect(res.body).toHaveProperty("users");
       expect(res.body.users.length).toBeGreaterThan(1);
     });

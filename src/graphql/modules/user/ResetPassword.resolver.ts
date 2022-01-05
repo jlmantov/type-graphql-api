@@ -2,6 +2,7 @@ import { Arg, Mutation, Resolver } from "type-graphql";
 import { getConnection } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { RESETPWD } from "../../../routes/user";
+import HttpError from "../../../utils/httpError";
 import { sendUserEmail } from "../../../utils/sendEmail";
 
 @Resolver()
@@ -13,7 +14,7 @@ export class ResetPasswordResolver {
     // first of all, find out if email is already in the database
     const registeredUser = await User.findOne({ where: { email } });
     if (!registeredUser) {
-      throw new Error("Error: user not found!");
+      throw new HttpError(400, "BadRequestError", "User validation failed");
     }
 
     // make user confirm email before login is enabled
