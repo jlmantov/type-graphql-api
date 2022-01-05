@@ -5,6 +5,7 @@ import { User } from "../orm/entity/User";
 import { testConn } from "../test-utils/testConn";
 import { createRefreshToken } from "../utils/auth";
 
+let conn: Connection;
 /**
  * inpired by Sam Meech-Ward - Testing Node Server with Jest and Supertest
  * https://www.youtube.com/watch?v=FKnzS_icp20
@@ -18,6 +19,14 @@ import { createRefreshToken } from "../utils/auth";
  * POST "/renew_accesstoken" - requires cookie with refreshToken.
  */
 describe("Main routes - Landingpage + Renew Access token", () => {
+  beforeAll(async () => {
+    conn = await testConn();
+  });
+
+  afterAll(async () => {
+    await conn.close();
+  });
+
   test("GET / - should return a simple 'hello' string", async () => {
     const response = await request(app).get("/");
     expect(response.statusCode).toBe(200);
@@ -26,15 +35,6 @@ describe("Main routes - Landingpage + Renew Access token", () => {
   });
 
   describe("POST /renew_accesstoken - requires cookie with refreshToken", () => {
-    let conn: Connection;
-    beforeAll(async () => {
-      conn = await testConn();
-    });
-
-    afterAll(async () => {
-      await conn.close();
-    });
-
     test("should fail on cookie missing", async () => {
       const res = await request(app).post("/renew_accesstoken").send(); // no cookie
       expect(res.statusCode).toEqual(400);
@@ -78,12 +78,12 @@ describe("Main routes - Landingpage + Renew Access token", () => {
     });
 
     test("should succeed on valid payload in cookie", async () => {
-      // 1. create an invalid refreshToken - use invalid userId/tokenVersion
+      // 1. create  refreshToken
       const user = await User.findOne({ id: 1 });
       expect(user).toBeDefined();
+      const refreshToken = await createRefreshToken(user!);
 
       // 2. add token to request in a cookie
-      const refreshToken = await createRefreshToken(user!);
       const res = await request(app)
         .post("/renew_accesstoken")
         .set("Cookie", `jid=${refreshToken}`)
