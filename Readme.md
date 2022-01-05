@@ -14,7 +14,7 @@
 - [Refresh the accessToken](https://github.com/jlmantov/type-graphql-api#refresh-the-accesstoken)
 - [Revoke tokens for a user (change password)](https://github.com/jlmantov/type-graphql-api#revoke-tokens-for-a-user-change-password)
 - [Confirmation email](https://github.com/jlmantov/type-graphql-api#confirmation-email)
-- [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
+- [Reorganize TypeGraphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegraphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
 - [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#reorganize-project---routes-controllers-middleware-graphql)
 
