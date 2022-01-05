@@ -154,4 +154,24 @@ describe("User", () => {
       expect(res.text).toEqual("Expired or unknown id, please register again");
     });
   });
+
+  // describe("GET /user/resetpwd/:id", () => {
+  //   test("should succeed on ...", async () => {
+  //     //  TO DO
+  //   });
+
+  //   test("should fail on ...", async () => {
+  //     //  TO DO
+  //   });
+  // });
+
+  // describe("POST /user/resetpwd/:id", () => {
+  //   test("should succeed on ...", async () => {
+  //     //  TO DO
+  //   });
+
+  //   test("should fail on ...", async () => {
+  //     //  TO DO
+  //   });
+  // });
 });
