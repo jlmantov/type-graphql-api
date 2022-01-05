@@ -17,7 +17,11 @@
 - [Reorganize TypeGaphQL Resolvers](https://github.com/jlmantov/type-graphql-api#reorganize-typegaphql-resolvers)
 - [Reset Password](https://github.com/jlmantov/type-graphql-api#reset-password)
 - [Reorganize project - routes, controllers, middleware, graphql](https://github.com/jlmantov/type-graphql-api#reorganize-project---routes-controllers-middleware-graphql)
+
 - [Automated test - Jest](https://github.com/jlmantov/type-graphql-api#automated-test---jest)
+- [Testing using ts-jest](https://github.com/jlmantov/type-graphql-api#testing-using-ts-jest)
+- [First GraphQL resolver Test - Register](https://github.com/jlmantov/type-graphql-api#first-graphql-resolver-test---register)
+- [REST endpoint Testing: GET landing page + POST Renew accessToken](https://github.com/jlmantov/type-graphql-api#rest-endpoint-testing-get-landing-page--post-renew-accesstoken)
 
 ## Motivation
 
@@ -539,7 +543,7 @@ Endpoint for receiving emails is going to be: http://{proces.env.DOMAIN}:{proces
 - URL endpoint is added to `src/index.ts`
 - Method implementation og `confirmEmail` is placed beside the other email handling ... this might be subject to refactoring along the way.
 
-## Reorganize TypeGaphQL Resolvers
+## Reorganize TypeGraphQL Resolvers
 
 `src/graphql/modules/user/User.resolver.ts` is bloated by now.
 
@@ -712,11 +716,9 @@ Other minor changes:
 - Reset Password cookie timeout: 5 minutes
 - Reset Password form timeout - resetPasswordTimeout() added to form
 
-# Automated test - Jest
+## Automated test - Jest
 
 Inspired by [this tutorial](https://www.youtube.com/watch?v=fxYcbw56mbk&list=PLN3n1USn4xlma1bBu3Tloe4NyYn9Ko8Gs&index=9).
-
-## Motivation
 
 Overall goal is to reach almost 100% code coverage (being flexible and reasonable).
 
@@ -727,7 +729,7 @@ Part of the agile mindset is:
 
 Unittesting with 100% code coverage is vital to refactoring on-the-fly.
 
-## Setup environment
+### Setup environment
 
 - Ensure a well defined starting point
 
@@ -830,11 +832,10 @@ The basic REST test setup is verified by `src/routes/routes.test.ts`.
 Next step is adding `src/routes/user/user.test.ts`.
 
 User endpoint testing shows clearly that authorization works but the response is unacceptable:
- - http statuscode 500 is not what I want on 'unauthorized' or 'access denied' responses
- - An error message with a stacktrace should never be visible to the client
+
+- http statuscode 500 is not what I want on 'unauthorized' or 'access denied' responses
+- An error message with a stacktrace should never be visible to the client
 
 Errorhandling as middleware is needed.
 
 ### Authorization and errorhandling
-
-
