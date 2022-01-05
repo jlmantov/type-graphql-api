@@ -847,3 +847,5 @@ Errorhandling [as middleware](https://wanago.io/2018/12/17/typescript-express-er
 3. Middleware is applied last in the middleware chain in `src/app.ts`
 
 4. All error handling is converted to use the new `HttpError`
+
+### User test continued

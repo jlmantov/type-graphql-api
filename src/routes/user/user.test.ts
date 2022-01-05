@@ -1,7 +1,9 @@
 import request from "supertest";
 import { Connection } from "typeorm";
+import { CONFIRMUSER } from ".";
 import app from "../../app";
 import { User } from "../../orm/entity/User";
+import { UserEmail } from "../../orm/entity/UserEmail";
 import { testConn } from "../../test-utils/testConn";
 import { createAccessToken } from "../../utils/auth";
 
@@ -72,12 +74,84 @@ describe("User", () => {
       //       email: 'john.doe@mail.com',
       //       password: 'BSIwn+mHrELgSdIhOktI1g$OsSHA1C7nffXe69/Omswog4GpwcNGX0sijRQwdiW8HQ',
       //       confirmed: false,
-      //       tokenVersion: 30
+      //       tokenVersion: 3
       //     },
       //     :
       //   ]
       expect(res.body).toHaveProperty("users");
       expect(res.body.users.length).toBeGreaterThan(1);
+    });
+  });
+
+  /**
+   * src/graphql/modules/user/REgister.test.ts:
+   * 1. When user is registered, an email is sent
+   * 2. If provided email is already in use, registration is rejected
+   * Test suite below:
+   * 3. Before user activates email-link, login is disabled
+   * 4. When user activates email-link, login is enabled
+   * 5. When user activates email-link, email-link is removed
+   * 6. When user activates email-link, user client is redirected to landing page
+   */
+  describe("Register user, Email confirmation - GET /user/confirm/:id", () => {
+    var user: User | undefined;
+    var userEmail: UserEmail | undefined;
+
+    beforeAll(async () => {
+      user = await User.findOne({ where: { confirmed: false } });
+      userEmail = await UserEmail.findOne({
+        where: {
+          email: user!.email,
+          reason: CONFIRMUSER,
+        },
+      });
+    });
+
+    test("Before user activates email-link, login is disabled", async () => {
+      expect(user).toBeDefined();
+      expect(userEmail).toBeDefined();
+      expect(user!.confirmed).toBe(false);
+    });
+
+    test("should succeed when user activates email-link", async () => {
+      expect(user).toBeDefined();
+      expect(user!.confirmed).toBe(false);
+      expect(userEmail).toBeDefined();
+
+      const res = await request(app)
+        .get("/user/confirm/" + userEmail!.uuid)
+        .send(); // no authentication header
+
+      // 4. When user activates email-link, login is enabled
+      const userActive = await User.findOne({ id: user!.id });
+      expect(userActive).toBeDefined();
+      expect(userActive!.confirmed).toBe(true);
+
+      // 5. When user activates email-link, email-link is removed
+      const userEmailActive = await UserEmail.findOne({
+        where: {
+          email: user!.email,
+          reason: CONFIRMUSER,
+        },
+      });
+      expect(userEmailActive).not.toBeDefined();
+
+      // 6. When user activates email-link, user client is redirected to landing page
+      expect(res.statusCode).toEqual(302);
+      expect(res.text).toEqual("Found. Redirecting to http://localhost:4000/");
+    });
+
+    test("should fail when user attempts to use email-link second time", async () => {
+      expect(user).toBeDefined();
+      expect(userEmail).toBeDefined();
+
+      const res = await request(app)
+        .get("/user/confirm/" + userEmail!.uuid)
+        .send();
+
+      // console.log("use email-link second time:", JSON.stringify(res, null, 2));
+      expect(res.statusCode).toEqual(400);
+      expect(res.text).toEqual("Expired or unknown id, please register again");
     });
   });
 });

@@ -20,11 +20,11 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
     where: { uuid: req.params.id, reason: CONFIRMUSER },
   });
   if (userConfirmation === undefined) {
-    res.status(400).json({ error: "Expired or unknown id, please register again!" });
+    res.status(400).send("Expired or unknown id, please register again");
   } else {
     const user = await User.findOne({ where: { email: userConfirmation.email } });
     if (!user) {
-      res.status(400).json({ error: "Not found!" });
+      res.status(400).send("Not found");
     } else {
       const success = await User.update(user.id, { confirmed: true });
       if (success.affected === 1) {
