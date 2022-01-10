@@ -1,11 +1,13 @@
+import faker from "faker";
 import request from "supertest";
 import { Connection } from "typeorm";
 import app from "../app";
+import { registerMutation } from "../graphql/modules/user/register/Register.test";
 import { User } from "../orm/entity/User";
+import { gqlCall } from "../test-utils/gqlCall";
 import { testConn } from "../test-utils/testConn";
 import { createRefreshToken } from "../utils/auth";
 
-let conn: Connection;
 /**
  * inpired by Sam Meech-Ward - Testing Node Server with Jest and Supertest
  * https://www.youtube.com/watch?v=FKnzS_icp20
@@ -19,12 +21,33 @@ let conn: Connection;
  * POST "/renew_accesstoken" - requires cookie with refreshToken.
  */
 describe("Main routes - Landingpage + Renew Access token", () => {
+  let conn: Connection;
+  let user: User;
+
   beforeAll(async () => {
     conn = await testConn();
+    // console.log("routes.test.ts DB: " + conn.driver.database);
+
+    const fakeUser = {
+      firstname: faker.name.firstName(),
+      lastname: faker.name.lastName(),
+      email: faker.internet.email(),
+      password: faker.internet.password(8),
+    };
+    const result = await gqlCall({
+      source: registerMutation,
+      variableValues: fakeUser,
+    });
+    if (!!result.data && result.data.register) {
+      user = result.data.register;
+      await conn.getRepository(User).increment({ id: user.id }, "confirmed", 1); // allow user to login
+      user.confirmed = true;
+      user.tokenVersion = 0; // used by '/renew_accesstoken'
+    }
   });
 
   afterAll(async () => {
-    await conn.close();
+    conn.isConnected && (await conn.close());
   });
 
   test("GET / - should return a simple 'hello' string", async () => {
@@ -40,7 +63,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty("error");
       expect(res.body.error).toEqual("Access denied!");
-    });
+    }); // test: fail on cookie missing
 
     test("should fail on refreshToken expired!", async () => {
       // old token - should fail with response message and cookie deleted in response
@@ -54,34 +77,12 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty("error");
       expect(res.body.error).toEqual("jwt expired");
-    });
-
-    test("should fail on invalid payload in cookie", async () => {
-      // 1. create an invalid refreshToken - use invalid userId/tokenVersion
-      const user = await User.findOne({ id: 1 });
-      expect(user).toBeDefined();
-
-      // invalidate tokenVersion in payload by incrementing tokenVersion in DB
-      const result = await conn.getRepository(User).increment({ id: 1 }, "tokenVersion", 1);
-      expect(result.affected).toBe(1);
-
-      const refreshToken = await createRefreshToken(user!);
-      // 2. add token to request in a cookie
-      const res = await request(app)
-        .post("/renew_accesstoken")
-        .set("Cookie", `jid=${refreshToken}`)
-        .send();
-      // 3. validate error response
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("refreshToken expired, please login again!");
-    });
+    }); // test: fail on refreshToken expired
 
     test("should succeed on valid payload in cookie", async () => {
       // 1. create  refreshToken
-      const user = await User.findOne({ id: 1 });
       expect(user).toBeDefined();
-      const refreshToken = await createRefreshToken(user!);
+      const refreshToken = await createRefreshToken(user);
 
       // 2. add token to request in a cookie
       const res = await request(app)
@@ -93,6 +94,26 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty("accessToken");
       expect(res.body).not.toHaveProperty("error");
-    });
-  });
+    }); // test: succeed on valid payload
+
+    test("should fail on invalid payload in cookie", async () => {
+      // 1. create an invalid refreshToken - use valid userId + invalid tokenVersion
+      expect(user).toBeDefined();
+
+      // invalidate tokenVersion in payload by incrementing tokenVersion in DB
+      const result = await conn.getRepository(User).increment({ id: user.id }, "tokenVersion", 1);
+      expect(result.affected).toBe(1);
+
+      const refreshToken = await createRefreshToken(user);
+      // 2. add token to request in a cookie
+      const res = await request(app)
+        .post("/renew_accesstoken")
+        .set("Cookie", `jid=${refreshToken}`)
+        .send();
+      // 3. validate error response
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty("error");
+      expect(res.body.error).toEqual("refreshToken expired, please login again!");
+    }); // test: fail on invalid payload
+  }); // POST /renew_accesstoken
 });

@@ -1,16 +1,9 @@
+import faker from "faker";
 import { Connection } from "typeorm";
+import { registerMutation } from "../graphql/modules/user/register/Register.test";
 import { User } from "../orm/entity/User";
 import { gqlCall } from "./gqlCall";
 import { testConn } from "./testConn";
-
-let conn: Connection;
-beforeAll(async () => {
-  conn = await testConn();
-});
-
-afterAll(async () => {
-  await conn.close();
-});
 
 /**
  * the graphql schema is called directly, using the graphql(...) function.
@@ -18,29 +11,6 @@ afterAll(async () => {
  *
  * GraphQL is going to be called a lot, so the setup around graphql(...) is stored in the helper-function: gqlCall
  */
-
-const johnDoe = {
-  firstname: "John",
-  lastname: "Doe",
-  email: "john.doe@mail.com",
-  password: "asdf1234",
-};
-
-const registerMutation = `
-mutation Register($firstname: String!, $lastname: String!, $email: String!, $password: String!) {
-	register(
-		firstname: $firstname
-		lastname: $lastname
-		email: $email
-		password: $password
-	) {
-	  id
-	  firstName
-	  lastName
-	  email
-	  name
-	}
-}`;
 
 const nonExistingQuery = `
 query ($email: String!) {
@@ -66,12 +36,31 @@ query GetUser($email: String!, $password: String!) {
 }`;
 
 describe("gqlCall test-util", () => {
+  var conn: Connection;
+  const fakeUser = {
+    firstname: faker.name.firstName(),
+    lastname: faker.name.lastName(),
+    email: faker.internet.email(),
+    password: faker.internet.password(8),
+  };
+
+  beforeAll(async () => {
+    conn = await testConn();
+    // console.log("gqlCall.test.ts DB: ", conn.driver.database);
+  });
+
+  afterAll(async () => {
+    conn.isConnected && (await conn.close());
+  });
+
   /**
    *
    */
-  test("create well known test user: John Doe - success", async () => {
-    const alreadyExist = await User.findOne({ where: { email: johnDoe.email } });
-    if (alreadyExist && alreadyExist.email === johnDoe.email) {
+  test("create test user - success", async () => {
+    const alreadyExist = await conn
+      .getRepository(User)
+      .findOne({ where: { email: fakeUser.email } });
+    if (alreadyExist && alreadyExist.email === fakeUser.email) {
       // During development, using `jest --watchAll`, the database will not be reset on every run.
       // This will allow continuous runs and stop jest from reporting an error that really isn't an error
       // console.log("John Doe found in DB, skipping this test.");
@@ -79,7 +68,7 @@ describe("gqlCall test-util", () => {
       // console.log("John Doe not found!");
       const response = await gqlCall({
         source: registerMutation,
-        variableValues: johnDoe,
+        variableValues: fakeUser,
       });
       // console.log("response: ", response);
 
@@ -87,18 +76,18 @@ describe("gqlCall test-util", () => {
         data: {
           register: {
             id: response.data!.register.id,
-            firstName: johnDoe.firstname,
-            lastName: johnDoe.lastname,
-            email: johnDoe.email,
-            name: johnDoe.firstname + " " + johnDoe.lastname,
+            firstName: fakeUser.firstname,
+            lastName: fakeUser.lastname,
+            email: fakeUser.email,
+            name: fakeUser.firstname + " " + fakeUser.lastname,
           },
         },
       });
 
-      const dbUser = await User.findOne({ where: { email: johnDoe.email } });
-      expect(dbUser).toBeDefined();
-      expect(dbUser?.firstName).toEqual(johnDoe.firstname);
-      expect(dbUser?.confirmed).toBeFalsy();
+      const user = await conn.getRepository(User).findOne({ where: { email: fakeUser.email } });
+      expect(user).toBeDefined();
+      expect(user?.firstName).toEqual(fakeUser.firstname);
+      expect(user?.confirmed).toBeFalsy();
     }
   });
 
@@ -109,7 +98,7 @@ describe("gqlCall test-util", () => {
     const response = await gqlCall({
       source: nonExistingQuery,
       variableValues: {
-        email: johnDoe.email,
+        email: fakeUser.email,
       },
     });
     // console.log("response: ", response);
@@ -126,8 +115,8 @@ describe("gqlCall test-util", () => {
     const response = await gqlCall({
       source: getUserQuery,
       variableValues: {
-        email: johnDoe.email,
-        //   password: johnDoe.password,
+        email: fakeUser.email,
+        //   password: fakeUser.password,
       },
     });
     // console.log("response: ", response);

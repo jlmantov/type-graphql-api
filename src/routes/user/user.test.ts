@@ -1,13 +1,14 @@
+import faker from "faker";
 import request from "supertest";
 import { Connection } from "typeorm";
 import { CONFIRMUSER } from ".";
 import app from "../../app";
+import { registerMutation } from "../../graphql/modules/user/register/Register.test";
 import { User } from "../../orm/entity/User";
 import { UserEmail } from "../../orm/entity/UserEmail";
+import { gqlCall } from "../../test-utils/gqlCall";
 import { testConn } from "../../test-utils/testConn";
 import { createAccessToken } from "../../utils/auth";
-
-let conn: Connection;
 
 /**
  * inpired by Sam Meech-Ward - Testing Node Server with Jest and Supertest
@@ -24,12 +25,33 @@ let conn: Connection;
  * POST "/user/resetpwd/:id" - activated from newPasswordForm_get
  */
 describe("User", () => {
+  var conn: Connection;
+  var user: User;
+
   beforeAll(async () => {
     conn = await testConn();
+    // console.log("user.test.ts DB: " + conn.driver.database);
+
+    const fakeUser = {
+      firstname: faker.name.firstName(),
+      lastname: faker.name.lastName(),
+      email: faker.internet.email(),
+      password: faker.internet.password(8),
+    };
+    const result = await gqlCall({
+      source: registerMutation,
+      variableValues: fakeUser,
+    });
+    if (!!result.data && result.data.register) {
+      user = result.data.register;
+      await conn.getRepository(User).increment({ id: user.id }, "confirmed", 1); // allow user to login
+      user.confirmed = false;
+      user.tokenVersion = 0; // used by '/renew_accesstoken'
+    }
   });
 
   afterAll(async () => {
-    await conn.close();
+    conn.isConnected && (await conn.close());
   });
 
   describe("GET /user/", () => {
@@ -38,7 +60,7 @@ describe("User", () => {
 
       expect(res.statusCode).toEqual(401);
       expect(res.text).toEqual("Not authenticated");
-    });
+    }); // test: fail on missing authentication header
 
     test("should fail on authentication header with expired accessToken", async () => {
       // expired access token
@@ -52,13 +74,12 @@ describe("User", () => {
 
       expect(res.statusCode).toEqual(403);
       expect(res.text).toEqual("Access expired, please login again");
-    });
+    }); // test: fail on expired accessToken
 
     test("should succeed on authentication header with valid accessToken", async () => {
-      // 1. create an invalid refreshToken - use invalid userId/tokenVersion
-      const user = await User.findOne({ id: 1 });
+      // 1. create an new refreshToken - use valid userId/tokenVersion
       expect(user).toBeDefined();
-      const accessToken = await createAccessToken(user!);
+      const accessToken = await createAccessToken(user);
 
       const res = await request(app)
         .get("/user")
@@ -80,8 +101,8 @@ describe("User", () => {
       //   ]
       expect(res.body).toHaveProperty("users");
       expect(res.body.users.length).toBeGreaterThan(1);
-    });
-  });
+    }); // test: authentication header with valid accessToken
+  }); // GET /user/
 
   /**
    * src/graphql/modules/user/REgister.test.ts:
@@ -94,16 +115,11 @@ describe("User", () => {
    * 6. When user activates email-link, user client is redirected to landing page
    */
   describe("Register user, Email confirmation - GET /user/confirm/:id", () => {
-    var user: User | undefined;
     var userEmail: UserEmail | undefined;
 
     beforeAll(async () => {
-      user = await User.findOne({ where: { confirmed: false } });
-      userEmail = await UserEmail.findOne({
-        where: {
-          email: user!.email,
-          reason: CONFIRMUSER,
-        },
+      userEmail = await conn.getRepository(UserEmail).findOne({
+        where: { email: user.email },
       });
     });
 
@@ -111,7 +127,7 @@ describe("User", () => {
       expect(user).toBeDefined();
       expect(userEmail).toBeDefined();
       expect(user!.confirmed).toBe(false);
-    });
+    }); // test: login disabled
 
     test("should succeed when user activates email-link", async () => {
       expect(user).toBeDefined();
@@ -123,12 +139,12 @@ describe("User", () => {
         .send(); // no authentication header
 
       // 4. When user activates email-link, login is enabled
-      const userActive = await User.findOne({ id: user!.id });
+      const userActive = await conn.getRepository(User).findOne({ id: user!.id });
       expect(userActive).toBeDefined();
       expect(userActive!.confirmed).toBe(true);
 
       // 5. When user activates email-link, email-link is removed
-      const userEmailActive = await UserEmail.findOne({
+      const userEmailActive = await conn.getRepository(UserEmail).findOne({
         where: {
           email: user!.email,
           reason: CONFIRMUSER,
@@ -139,7 +155,7 @@ describe("User", () => {
       // 6. When user activates email-link, user client is redirected to landing page
       expect(res.statusCode).toEqual(302);
       expect(res.text).toEqual("Found. Redirecting to http://localhost:4000/");
-    });
+    }); // test: user activates email-link
 
     test("should fail when user attempts to use email-link second time", async () => {
       expect(user).toBeDefined();
@@ -152,8 +168,8 @@ describe("User", () => {
       // console.log("use email-link second time:", JSON.stringify(res, null, 2));
       expect(res.statusCode).toEqual(400);
       expect(res.text).toEqual("Expired or unknown id, please register again");
-    });
-  });
+    }); // test: fail on attempt to use email-link second time
+  }); // Register user, Email confirmation
 
   // describe("GET /user/resetpwd/:id", () => {
   //   test("should succeed on ...", async () => {

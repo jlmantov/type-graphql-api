@@ -4,22 +4,13 @@ import { User } from "../../../../orm/entity/User";
 import { gqlCall } from "../../../../test-utils/gqlCall";
 import { testConn } from "../../../../test-utils/testConn";
 
-let conn: Connection;
-beforeAll(async () => {
-  conn = await testConn();
-});
-
-afterAll(async () => {
-  await conn.close();
-});
-
 /**
  * the graphql schema is called directly, using the graphql(...) function.
  * graphql takes some input arguments - like a schema, query/mutation
  * GraphQL is going to be called a lot, so the setup around graphql(...) is stored in a helper-function gqlCall
  */
 
-const registerMutation = `
+export const registerMutation = `
 mutation Register($firstname: String!, $lastname: String!, $email: String!, $password: String!) {
 	register(
 	  firstname: $firstname
@@ -36,53 +27,64 @@ mutation Register($firstname: String!, $lastname: String!, $email: String!, $pas
  }
 `;
 
-let duplicateUser: { firstname: string; lastname: string; email: string; password: string };
-
 describe("Register resolver", () => {
-  /**
-   * Success scenario: Create user
-   */
-  test("Create user - success", async () => {
-    const user = {
+  var conn: Connection;
+  var fakeUser: { firstname: string; lastname: string; email: string; password: string };
+
+  beforeAll(async () => {
+    conn = await testConn();
+    // console.log("Register.test.ts DB: " + conn.driver.database);
+    fakeUser = {
       firstname: faker.name.firstName(),
       lastname: faker.name.lastName(),
       email: faker.internet.email(),
       password: faker.internet.password(8),
     };
-    duplicateUser = user; // used in next test
-    // console.log("user: ", user);
+  });
+
+  afterAll(async () => {
+    conn.isConnected && (await conn.close());
+  });
+
+  /**
+   * Success scenario: Create user
+   */
+  test("Create user - success", async () => {
+    // console.log("fakeUser: ", fakeUser);
+    expect(fakeUser.email.length).toBeGreaterThan(0)
 
     const response = await gqlCall({
       source: registerMutation,
-      variableValues: user,
+      variableValues: fakeUser,
     });
-    // console.log("response: ", response);
 
     expect(response).toMatchObject({
       data: {
         register: {
           id: response.data!.register.id,
-          firstName: user.firstname,
-          lastName: user.lastname,
-          email: user.email,
-          name: user.firstname + " " + user.lastname,
+          firstName: fakeUser.firstname,
+          lastName: fakeUser.lastname,
+          email: fakeUser.email,
+          name: fakeUser.firstname + " " + fakeUser.lastname,
         },
       },
     });
 
-    const dbUser = await User.findOne({ where: { email: user.email } });
-    expect(dbUser).toBeDefined();
-    expect(dbUser?.firstName).toEqual(user.firstname);
-    expect(dbUser?.confirmed).toBeFalsy();
+    const user = await conn.getRepository(User).findOne({ where: { email: fakeUser.email } });
+    expect(user).toBeDefined();
+    expect(user?.firstName).toEqual(fakeUser.firstname);
+    expect(user?.confirmed).toBeFalsy();
   });
 
   /**
    * Error scenario: "Error: user already exist!"
    */
   test("Duplicate user - failure", async () => {
+    expect(fakeUser.email.length).toBeGreaterThan(0);
+
     const response = await gqlCall({
       source: registerMutation,
-      variableValues: duplicateUser,
+      variableValues: fakeUser, // attempt to register fakeUser second time
     });
     // console.log("response: ", response);
 
@@ -98,4 +100,5 @@ describe("Register resolver", () => {
    * in the database - e.g.: 'database down', 'network failure' - stuff like that.
    * For now, I accept that this scenario is not tested.
    */
+
 });
