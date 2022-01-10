@@ -1,30 +1,40 @@
 import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ApolloServer } from "apollo-server-express";
-import "dotenv/config";
+import dotenv from "dotenv";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
 import app from "./app";
 import { createSchema } from "./graphql/utils/createSchema";
 
 // lambda function calling itself immediately - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
-(async () => {
-  await createConnection(); // create database connection.
-  // In case synchronization is set to true, any missing tables and fields will be created
-  // ... which is helpful in development - make sure synchronization is NOT used in PRODUCTION
+const bootstrap = async () => {
+  // development, test, production etc.
+  const envfile = __dirname + "/../.env." + (process.env.NODE_ENV || "development");
+  dotenv.config({ path: envfile });
+
+  await createConnection(); // create database connection
 
   // Apply GraphQL stuff
+  // https://www.apollographql.com/docs/apollo-server/v2/api/apollo-server/#middleware-specific-context-fields
   const graphqlServer = new ApolloServer({
     schema: await createSchema(),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
     context: ({ req, res }) => ({ req, res }),
   });
 
-  // add the express server as middleware to the GaphQL server - meaning that express is served first
+  // body-parser included: https://www.apollographql.com/docs/apollo-server/v2/migration-two-dot/#simplified-usage
+  // add the express server as middleware to the GaphQL server
+  // https://www.apollographql.com/docs/apollo-server/v2/migration-two-dot/#apollo-server-2-new-pattern
   await graphqlServer.start();
-  await graphqlServer.applyMiddleware({ app });
+
+  // apollo-server-express/src/ApolloServer.ts/applyMiddleware({ app, ...rest }):
+  // app.use(this.getMiddleware({ path: "/graphql"}))
+  await graphqlServer.applyMiddleware({ app, path: "/graphql" });
 
   const port = process.env.PORT!;
   app.listen(port, () => {
     console.log(`Express server started at port ${port}`);
   });
-})();
+};
+
+bootstrap();
