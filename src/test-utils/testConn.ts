@@ -1,34 +1,30 @@
+import dotenv from "dotenv";
 import { createConnection } from "typeorm";
+import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions";
 
 /**
  * TypeORM createConnection to a database specifically created for unit testing.
- *
- * testConn(false) - default:
- * 1. return connection
- *
- * testConn(true):
- * 1. synchronize ORM entity objects with the schema
- * 2. drop the schema if specified by input parameter is true.
- * 3. return connection
- *
- * This is how the testing entry-point will always be the same.
- *
- * @param init - true: drop schema, false: keep existing schema
  * @returns TypeORM DB Connection
  */
-export const testConn = (init: boolean = false) => {
-  // https://typeorm.io/#connection-options/mysql--mariadb-connection-options
-  return createConnection({
+export const testConn = async () => {
+  const envfile = __dirname + "/../../.env." + (process.env.NODE_ENV || "test");
+  await dotenv.config({ path: envfile });
+
+  const connectionOptions: MysqlConnectionOptions = {
     type: "mysql",
-    host: "localhost",
-    port: 3306,
-    username: "user",
-    password: "password",
-    database: "sandbox-test",
-    charset: "utf8_danish_ci",
+    host: process.env.TYPEORM_HOST || "localhost",
+    port: parseInt(process.env.TYPEORM_PORT || "3306", 10),
+    username: process.env.TYPEORM_USERNAME,
+    password: process.env.TYPEORM_PASSWORD,
+    database: process.env.TYPEORM_DATABASE,
+    charset: process.env.TYPEORM_CHARSET,
     timezone: "+1:00",
-    synchronize: init,
-    dropSchema: init,
-    entities: [__dirname + "/../orm/entity/**/*.ts"],
-  });
+    synchronize: process.env.TYPEORM_ENTITIES === "true" ? true : false,
+    dropSchema: process.env.TYPEORM_DROP_SCHEMA === "true" ? true : false,
+    entities: [`${process.env.TYPEORM_ENTITIES}`],
+    migrations: [`${process.env.TYPEORM_MIGRATIONS}`],
+    subscribers: [`${process.env.TYPEORM_SUBSCRIBERS}`],
+  };
+
+  return await createConnection(connectionOptions);
 };

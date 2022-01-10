@@ -1,15 +1,26 @@
+import { User } from "../orm/entity/User";
+import { UserEmail } from "../orm/entity/UserEmail";
 import { testConn } from "./testConn";
 
 /**
- * async function call -
+ * Dropping the whole schema seems like a bad idea. Sometimes some of the tests fail due to missing connection
  * resetTestDB.ts is called from package.json to initialize automated tests (ts-jest)
  *
- * Create an initial DB connection pool that does the following:
- * 1. drop schema in order to start on a fresh test
- * 2. synchronize src/orm/entity/ objects with the schema: create tables
- * 3. exit process when db/tables are ready
+ * Clear/truncate all tables
  */
-testConn(true).then((conn) => {
-  console.log("Reset Test DB: ", JSON.stringify(conn.options.database));
+export const resetTestDB = async () => {
+  const conn = await testConn();
+  await conn.getRepository(User).clear();
+  await conn.getRepository(UserEmail).clear();
+
+  console.log(
+    "Reset " +
+      conn.options.database +
+      "\n - User entities: " +
+      (await conn.getRepository(User).count()) +
+      "\n - UserEmail entities " +
+      (await conn.getRepository(UserEmail).count())
+  );
   process.exit();
-});
+};
+resetTestDB();
