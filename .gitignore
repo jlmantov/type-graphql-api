@@ -5,3 +5,5 @@ build/
 coverage/
 tmp/
 temp/
+
+package-lock.json
