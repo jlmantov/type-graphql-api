@@ -38,7 +38,7 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
         tokenVersion: payload.ogj,
       };
     } catch (error) {
-      throw error; // propagate possible token verification error from 'deeper layers'
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
     }
 
     const user = await User.findOne(context.user.id);
