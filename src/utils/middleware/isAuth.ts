@@ -28,7 +28,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
       tokenVersion: payload.ogj,
     };
     if (!reqUsr.id || reqUsr.tokenVersion < 0) {
-      console.log("Invalid token payload: ", payload); // log token verification error
+      // console.log("Invalid token payload: ", payload); // log token verification error
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
       throw new HttpError(403, "AuthorizationError", "Access expired, please login again"); // anonymous error, user might be looking for a vulnerabilities
     }

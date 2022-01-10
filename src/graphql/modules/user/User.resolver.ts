@@ -65,7 +65,7 @@ export class UserResolver {
 
     // By adding authentication as middleware, the authentication is performed before the query takes place.
     // since isAuth is going to throw an error if user is missing, we can access user directly from here
-    console.log(`isAuthenticated: userId ${user!.id} is authenticated!`);
+    // console.log(`isAuthenticated: userId ${user!.id} is authenticated!`);
     return `userId ${user!.id} is authenticated!`;
   }
 
@@ -91,13 +91,13 @@ export class UserResolver {
     // tell TypeScript that confirmEmail returns a promise of type boolean
 
     const userConfirmation = await UserEmail.findOne({ where: { uuid } });
-    console.log("userConfirmation", userConfirmation);
+    // console.log("userConfirmation", userConfirmation);
     if (userConfirmation === undefined) {
       return false;
     }
 
     const user = await User.findOne({ where: { email: userConfirmation.email } });
-    console.log("user", user);
+    // console.log("user", user);
     if (!user) {
       return false;
     }

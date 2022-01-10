@@ -179,6 +179,6 @@ export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean>
   ctx.user!.tokenVersion += 1;
   ctx.res.clearCookie("jid");
 
-  console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
+  // console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
   return true;
 };

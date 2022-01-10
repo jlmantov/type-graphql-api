@@ -55,7 +55,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
       tokenVersion: payload.rnl
     }
   } catch (error) {
-    console.log("Invalid token payload: ", error); // log token verification error
+    // console.log("Invalid token payload: ", error); // log token verification error
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
   }
 
@@ -95,7 +95,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
 
   const updRes = await User.update(user.id, { password: hashedPwd });
   if (updRes.affected === 1) {
-    console.log("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
+    // console.log("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
     UserEmail.delete(userEmail.id); // only cleanup if password was actually enabled
   }
   return !!updRes.affected; // true if more than zero rows were affected by the update
