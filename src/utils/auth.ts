@@ -118,7 +118,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   }
 
   //  token is valid and we can return an accessToken
-  const user = await User.findOne({ id: reqUsr.id });
+  const user = await getConnection().getRepository(User).findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
     return res.status(400).send({ accessToken: "", error: "System error!" });

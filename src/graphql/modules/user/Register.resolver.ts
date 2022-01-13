@@ -1,4 +1,5 @@
 import { Arg, Mutation, Resolver } from "type-graphql";
+import { getConnection } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { CONFIRMUSER } from "../../../routes/user";
 import { hash } from "../../../utils/crypto";
@@ -17,19 +18,22 @@ export class RegisterResolver {
     // tell TypeScript that getUser returns a promise of type User or null
 
     // first of all, find out if email is already in the database
-    const registeredUser = await User.findOne({ where: { email } });
+    const userRepo = await getConnection().getRepository(User);
+    const registeredUser = await userRepo.findOne({ where: { email } });
     if (registeredUser) {
       throw new HttpError(400, "BadRequestError", "User already exist"); // avoid duplicates
     }
 
     // encrypt the password (keep it a secret)
     const hashedPassword = await hash(password);
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-    }).save();
+    const user = await userRepo
+      .create({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+      })
+      .save();
 
     if (!user) {
       throw new HttpError(500, "InternalServerError", "Unable to create user"); // some unhandled error - net, connection, DB, disc whatever ...

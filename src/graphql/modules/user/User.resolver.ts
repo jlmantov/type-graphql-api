@@ -4,6 +4,7 @@ import { User } from "../../../orm/entity/User";
 import { UserEmail } from "../../../orm/entity/UserEmail";
 import { revokeRefreshTokens } from "../../../utils/auth";
 import { verifyPwd } from "../../../utils/crypto";
+import HttpError from "../../../utils/httpError";
 import { GraphqlContext } from "../../utils/GraphqlContext";
 import { isAuthGql } from "../../utils/middleware/isAuth";
 
@@ -17,7 +18,7 @@ export class UserResolver {
   @UseMiddleware(isAuthGql)
   users(): Promise<User[]> {
     // tell TypeScript that users returns a promise with an array of type User
-    return User.find();
+    return getConnection().getRepository(User).find();
   }
 
   /**
@@ -32,9 +33,9 @@ export class UserResolver {
     @Arg("password") password: string
   ): Promise<User | null> {
     // tell TypeScript that getUser returns a promise of type User or null
-    const user = await User.findOne({ where: { email } });
+    const user = await getConnection().getRepository(User).findOne({ where: { email } });
     if (!user) {
-      return null;
+      throw new HttpError(204, "BadRequestError", "Not found");
     }
 
     // const validated = await verifyPwd(password, user.password);
@@ -43,10 +44,10 @@ export class UserResolver {
       validated = await verifyPwd(password, user.password);
     } catch (error) {
       console.error(error);
-      return null;
+      throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
     }
     if (!validated) {
-      return null;
+      throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
     }
 
     // notice, that even though user contains both salt and password, those fields are kept private
@@ -90,22 +91,26 @@ export class UserResolver {
   async confirmEmail(@Arg("uuid") uuid: string): Promise<boolean> {
     // tell TypeScript that confirmEmail returns a promise of type boolean
 
-    const userConfirmation = await UserEmail.findOne({ where: { uuid } });
+    const userConfirmation = await getConnection()
+      .getRepository(UserEmail)
+      .findOne({ where: { uuid } });
     // console.log("userConfirmation", userConfirmation);
     if (userConfirmation === undefined) {
       return false;
     }
 
-    const user = await User.findOne({ where: { email: userConfirmation.email } });
+    const user = await getConnection()
+      .getRepository(User)
+      .findOne({ where: { email: userConfirmation.email } });
     // console.log("user", user);
     if (!user) {
       return false;
     }
 
-    const success = await User.update(user.id, { confirmed: true });
+    const success = await getConnection().getRepository(User).update(user.id, { confirmed: true });
     if (success.affected === 1) {
       // only cleanup if user login was actually enabled
-      UserEmail.delete(userConfirmation.id);
+      getConnection().getRepository(UserEmail).delete(userConfirmation.id);
     }
     return true;
   }
@@ -132,13 +137,14 @@ export class UserResolver {
 
     userEmails.map(async (outdated: UserEmail) => {
       // cleanup table Users
-      const user = await User.findOne({ where: { email: outdated.email, confirmed: false } });
+      const userRepo = await getConnection().getRepository(User);
+      const user = await userRepo.findOne({ where: { email: outdated.email, confirmed: false } });
       if (user) {
-        User.delete(user.id);
+        userRepo.delete(user.id);
       }
 
       // cleanup table UserEmails
-      UserEmail.delete(outdated.id);
+      getConnection().getRepository(UserEmail).delete(outdated.id);
     });
 
     return true;

@@ -12,7 +12,9 @@ export class ResetPasswordResolver {
     // tell TypeScript that getUser returns a promise of type User or null
 
     // first of all, find out if email is already in the database
-    const registeredUser = await User.findOne({ where: { email } });
+    const userRepo = await getConnection().getRepository(User);
+
+    const registeredUser = await userRepo.findOne({ where: { email } });
     if (!registeredUser) {
       throw new HttpError(400, "BadRequestError", "User validation failed");
     }
@@ -20,9 +22,7 @@ export class ResetPasswordResolver {
     // make user confirm email before login is enabled
     await sendUserEmail(email, RESETPWD);
 
-    const result = await getConnection()
-      .getRepository(User)
-      .increment({ id: registeredUser.id }, "tokenVersion", 1);
+    const result = await userRepo.increment({ id: registeredUser.id }, "tokenVersion", 1);
 
     return !!result.affected; // amount of affected rows turned into a boolean
   }

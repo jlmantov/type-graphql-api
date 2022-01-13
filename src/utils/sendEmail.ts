@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
+import { getConnection } from "typeorm";
 import { v4 } from "uuid";
 import { User } from "../orm/entity/User";
 import { UserEmail } from "../orm/entity/UserEmail";
@@ -16,20 +17,22 @@ import { resetPasswordHtml } from "./resetPasswordForm";
  */
 export const confirmUserEmail = async (req: Request, res: Response) => {
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
-  const userConfirmation = await UserEmail.findOne({
+  const userEmailRepo = await getConnection().getRepository(UserEmail);
+  const userConfirmation = await userEmailRepo.findOne({
     where: { uuid: req.params.id, reason: CONFIRMUSER },
   });
   if (userConfirmation === undefined) {
     res.status(400).send("Expired or unknown id, please register again");
   } else {
-    const user = await User.findOne({ where: { email: userConfirmation.email } });
+    const userRepo = await getConnection().getRepository(User);
+    const user = await userRepo.findOne({ where: { email: userConfirmation.email } });
     if (!user) {
       res.status(400).send("Not found");
     } else {
-      const success = await User.update(user.id, { confirmed: true });
+      const success = await userRepo.update(user.id, { confirmed: true });
       if (success.affected === 1) {
         // only cleanup if user login was actually enabled
-        await UserEmail.delete(userConfirmation.id);
+        await userEmailRepo.delete(userConfirmation.id);
       }
       res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
     }
@@ -48,11 +51,15 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
  */
 export const resetPasswordForm = async (req: Request, res: Response) => {
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
-  const userReset = await UserEmail.findOne({ where: { uuid: req.params.id, reason: RESETPWD } });
+  const userReset = await getConnection()
+    .getRepository(UserEmail)
+    .findOne({ where: { uuid: req.params.id, reason: RESETPWD } });
   if (userReset === undefined) {
     res.status(400).json({ error: "Expired or unknown id, please reset again!" });
   } else {
-    const user = await User.findOne({ where: { email: userReset.email } });
+    const user = await getConnection()
+      .getRepository(User)
+      .findOne({ where: { email: userReset.email } });
     if (!user) {
       res.status(400).json({ error: "Not found!" });
     } else {
@@ -118,7 +125,7 @@ export const sendUserEmail = async (email: string, reason: string) => {
 
   // Preview only available when sending through an Ethereal account
   // TO DO - log nodemailer link to DB instead of console.log
-  console.log("User created. Nodemailer preview URL: %s", nodemailer.getTestMessageUrl(info));
+  console.log("User created. Nodemailer preview URL: " + nodemailer.getTestMessageUrl(info));
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 };
 
@@ -133,12 +140,13 @@ const createEmailUrl = async (email: string, reason: string) => {
   while (!uniqeUUID) {
     uuid = v4(); // unique identifier
 
-    const oldEmail = await UserEmail.findOne({ where: { email, reason } });
+    const userEmailRepo = await getConnection().getRepository(UserEmail);
+    const oldEmail = await userEmailRepo.findOne({ where: { email, reason } });
     if (oldEmail) {
-      UserEmail.delete(oldEmail.id); // delete + create instead of updating uuid, timestamp etc.
+      userEmailRepo.delete(oldEmail.id); // delete + create instead of updating uuid, timestamp etc.
     }
 
-    const result = await UserEmail.create({ uuid, email, reason }).save();
+    const result = await userEmailRepo.create({ uuid, email, reason }).save();
     if (result instanceof UserEmail && result.uuid === uuid && result.email === email) {
       uniqeUUID = true;
     }

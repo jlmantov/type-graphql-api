@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { getConnection } from "typeorm";
 import { User } from "../../orm/entity/User";
 import { getJwtPayload, JwtAccessPayload } from "../auth";
 import HttpError from "../httpError";
@@ -33,7 +34,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
       throw new HttpError(403, "AuthorizationError", "Access expired, please login again"); // anonymous error, user might be looking for a vulnerabilities
     }
 
-    User.findOne(reqUsr.id).then((usr) => {
+    getConnection().getRepository(User).findOne(reqUsr.id).then((usr) => {
       if (usr) {
         if (usr.tokenVersion !== reqUsr!.tokenVersion) {
           // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403

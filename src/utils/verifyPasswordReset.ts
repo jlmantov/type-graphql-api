@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { getConnection } from "typeorm";
 import { validate as uuidValidate } from "uuid";
 import { User } from "../orm/entity/User";
 import { UserEmail } from "../orm/entity/UserEmail";
@@ -52,8 +53,8 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     payload = getJwtPayload(token) as JwtResetPayload; // verified attribute userId
     reqUsr = {
       id: parseInt(payload.plf, 10),
-      tokenVersion: payload.rnl
-    }
+      tokenVersion: payload.rnl,
+    };
   } catch (error) {
     // console.log("Invalid token payload: ", error); // log token verification error
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
@@ -63,7 +64,9 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  const userEmail = await UserEmail.findOne({ where: { uuid, reason: RESETPWD } });
+  const userEmail = await getConnection()
+    .getRepository(UserEmail)
+    .findOne({ where: { uuid, reason: RESETPWD } });
   if (!userEmail) {
     // userEmail not found
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
@@ -81,7 +84,8 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   const hashedPwd = await hash(pwd);
 
   // console.log("User.findOne: ", { id: pUserId, email: userEmail.email, tokenVersion: pTokenVersion, confirmed: true });
-  const user = await User.findOne({
+  const userRepo = await getConnection().getRepository(User);
+  const user = await userRepo.findOne({
     where: {
       id: reqUsr.id,
       email: userEmail.email,
@@ -93,10 +97,10 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  const updRes = await User.update(user.id, { password: hashedPwd });
+  const updRes = await userRepo.update(user.id, { password: hashedPwd });
   if (updRes.affected === 1) {
     // console.log("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
-    UserEmail.delete(userEmail.id); // only cleanup if password was actually enabled
+    getConnection().getRepository(UserEmail).delete(userEmail.id); // only cleanup if password was actually enabled
   }
   return !!updRes.affected; // true if more than zero rows were affected by the update
 };
