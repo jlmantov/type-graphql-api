@@ -15,7 +15,6 @@
     "-- Test -----": "synchronize = false  --  migration to test (this part is tested too)",
     "test": "npm run test:resetDB && jest",
     "coverage": "npm run test:resetDB && jest --coverage",
-    "resetdb": "ts-node ./src/test-utils/resetTestDB.ts",
     "typeorm:drop": "set NODE_ENV=test&& npm run typeorm schema:drop",
     "test:resetDB": "set NODE_ENV=test&& npm run typeorm schema:drop && npm run typeorm migration:run",
     "test:migration:run": "set NODE_ENV=test&& npm run typeorm migration:run",

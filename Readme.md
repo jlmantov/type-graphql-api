@@ -866,4 +866,8 @@ In order to organize the project workflow/lifecycle and keep track of build/depl
 
 This way I am allowed to customize settings (DB login), compiler options (TypeScript sourceMap) etc.
 
+### Reset Test DB
+
+While `package.json`'s script section is heavily modified, database reset is also altered. The previous `src/test-utils/resetTestDB.ts` is removed in exchange with environment specific commands.
+
 ### User test continued
