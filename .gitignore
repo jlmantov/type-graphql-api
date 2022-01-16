@@ -2,8 +2,13 @@
 .vscode/
 node_modules/
 build/
+dist/
+logs/
 coverage/
 tmp/
 temp/
 
+.env.staging*
+.env.prod*
+*_
 package-lock.json

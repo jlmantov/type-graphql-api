@@ -22,6 +22,7 @@
 - [Testing using ts-jest](https://github.com/jlmantov/type-graphql-api#testing-using-ts-jest)
 - [First GraphQL resolver Test - Register](https://github.com/jlmantov/type-graphql-api#first-graphql-resolver-test---register)
 - [REST endpoint Testing: GET landing page + POST Renew accessToken](https://github.com/jlmantov/type-graphql-api#rest-endpoint-testing-get-landing-page--post-renew-accesstoken)
+- [TypeORM Migrations](https://github.com/jlmantov/type-graphql-api#typeorm-migrations)
 
 ## Motivation
 
@@ -847,5 +848,22 @@ Errorhandling [as middleware](https://wanago.io/2018/12/17/typescript-express-er
 3. Middleware is applied last in the middleware chain in `src/app.ts`
 
 4. All error handling is converted to use the new `HttpError`
+
+## TypeORM Migrations
+
+The database layout needs to be synchronized with the TypeORM models.
+Moving the project into production requires ability to maintain data while upgrading DB layout - [TypeORM Migrations](https://typeorm.io/#/migrations) does exacltly that.
+
+Project strategy is this:
+
+- .env.development - allows building new TypeORM Entities (database models) which is synchronized into the database
+- .env.test - requires migrations (synchronize = false)
+- .env.staginglocal - requires migrations (synchronize = false)
+- .env.staging - requires migrations (synchronize = false)
+- .env.prod - requires migrations (synchronize = false)
+
+In order to organize the project workflow/lifecycle and keep track of build/deployment strategy, environment specific commands are added to `package.json`.
+
+This way I am allowed to customize settings (DB login), compiler options (TypeScript sourceMap) etc.
 
 ### User test continued
