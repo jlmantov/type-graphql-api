@@ -16,7 +16,7 @@
     "inlineSourceMap": true, // https://www.typescriptlang.org/tsconfig#inlineSourceMap
     "inlineSources": true, // https://www.typescriptlang.org/tsconfig#inlineSources
     "declaration": true, // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
-    "declarationMap": true, // https://www.typescriptlang.org/tsconfig#declarationMap
+    "declarationMap": false, // https://www.typescriptlang.org/tsconfig#declarationMap
 
     "composite": false,
     "removeComments": true,
