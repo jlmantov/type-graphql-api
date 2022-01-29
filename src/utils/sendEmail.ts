@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { v4 } from "uuid";
 import { User } from "../orm/entity/User";
 import { UserEmail } from "../orm/entity/UserEmail";
 import { CONFIRMUSER, RESETPWD } from "../routes/user";
 import { createResetPasswordToken } from "./auth";
+import HttpError from "./httpError";
 import { resetPasswordHtml } from "./resetPasswordForm";
 
 /**
@@ -137,19 +138,27 @@ export const sendUserEmail = async (email: string, reason: string) => {
 const createEmailUrl = async (email: string, reason: string) => {
   let uuid;
   let uniqeUUID = false; // uuid needs to be unique - there's a good chance it is, but we need to be sure.
+  const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
+
+  // there is a theoretical chance that uuid already exists, not likely though
   while (!uniqeUUID) {
-    uuid = v4(); // unique identifier
-
-    const userEmailRepo = await getConnection().getRepository(UserEmail);
-    const oldEmail = await userEmailRepo.findOne({ where: { email, reason } });
-    if (oldEmail) {
-      userEmailRepo.delete(oldEmail.id); // delete + create instead of updating uuid, timestamp etc.
-    }
-
-    const result = await userEmailRepo.create({ uuid, email, reason }).save();
-    if (result instanceof UserEmail && result.uuid === uuid && result.email === email) {
+    uuid = await v4(); // unique identifier
+    const uuidDoublet = await emailRepo.findOne({ where: { uuid } });
+    if (!uuidDoublet) {
       uniqeUUID = true;
     }
+  }
+
+  const oldEmail = await emailRepo.findOne({ where: { email, reason } });
+  if (oldEmail) {
+    console.log("emailRepo.delete(" + oldEmail.id + ")");
+    await emailRepo.delete(oldEmail.id); // delete + create instead of updating uuid, timestamp etc.
+  }
+
+  const result = await emailRepo.create({ email, reason, uuid }).save();
+  if (result?.email !== email || result?.reason !== reason || result?.uuid !== uuid) {
+    console.log("emailRepo.create ERROR - result:", result);
+    throw new HttpError(500, "InternalServerError", "Creating new email failed");
   }
 
   return `http://${process.env.DOMAIN}:${process.env.PORT}/user/${reason}/${uuid}`;
