@@ -10,7 +10,10 @@ import { ConnectionOptions } from "typeorm";
 const configName = process.env.NODE_ENV?.trim() || "development";
 const envfile = __dirname + "/../../.env." + configName;
 console.log("configName: '" + configName + "', envfile: '" + envfile + "'");
-dotenv.config({ path: envfile });
+const envConf = dotenv.config({ path: envfile });
+if (envConf?.parsed?.DOMAIN === "localhost") {
+  console.log("Configuration environment:", envConf?.parsed?.NODE_ENV);
+}
 
 const ORMConfig: ConnectionOptions = {
   name: "default",
@@ -24,15 +27,16 @@ const ORMConfig: ConnectionOptions = {
   timezone: "+1:00",
   synchronize: !!process.env.TYPEORM_SYNCHRONIZE,
   dropSchema: !!process.env.TYPEORM_DROP_SCHEMA,
-  entities: [String(process.env.TYPEORM_ENTITIES)],
   migrationsTableName: "migrations",
+  entities: [String(process.env.TYPEORM_ENTITIES)],
   migrations: [String(process.env.TYPEORM_MIGRATIONS)],
-  // subscribers: process.env.TYPEORM_SUBSCRIBERS,
-  // subscribersDir: process.env.TYPEORM_SUBSCRIBERS_DIR,
+  subscribers: [String(process.env.TYPEORM_SUBSCRIBERS)],
   cli: {
+    entitiesDir: String(process.env.TYPEORM_ENTITIES_DIR),
     migrationsDir: String(process.env.TYPEORM_MIGRATIONS_DIR),
+    subscribersDir: String(process.env.TYPEORM_SUBSCRIBERS_DIR),
   },
 };
-console.log("ORMConfig", ORMConfig);
+(configName !== "prod") && console.log("ORMConfig", ORMConfig);
 
 export = ORMConfig;
