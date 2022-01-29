@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import jwt, { SignOptions, verify } from "jsonwebtoken";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 import { User } from "../orm/entity/User";
 import HttpError from "./httpError";
@@ -118,7 +118,8 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   }
 
   //  token is valid and we can return an accessToken
-  const user = await getConnection().getRepository(User).findOne({ id: reqUsr.id });
+  const userRepo = getConnection().getRepository("User") as Repository<User>;
+  const user = await userRepo.findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
     return res.status(400).send({ accessToken: "", error: "System error!" });
@@ -168,9 +169,8 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
 export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean> => {
   // By adding authentication as middleware, the authentication is performed before the query takes place.
   // since isAuth is going to throw an error if user is missing, we can access user directly from here
-  const result = await getConnection()
-    .getRepository(User)
-    .increment({ id: ctx.user!.id }, "tokenVersion", 1); // accessToken.bit = userId
+  const userRepo = getConnection().getRepository("User") as Repository<User>;
+  const result = await userRepo.increment({ id: ctx.user!.id }, "tokenVersion", 1); // accessToken.bit = userId
   if (result.affected !== 1) {
     return false;
   }

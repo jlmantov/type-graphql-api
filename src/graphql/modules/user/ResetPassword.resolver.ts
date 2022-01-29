@@ -1,5 +1,5 @@
 import { Arg, Mutation, Resolver } from "type-graphql";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { RESETPWD } from "../../../routes/user";
 import HttpError from "../../../utils/httpError";
@@ -12,8 +12,7 @@ export class ResetPasswordResolver {
     // tell TypeScript that getUser returns a promise of type User or null
 
     // first of all, find out if email is already in the database
-    const userRepo = await getConnection().getRepository(User);
-
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
     const registeredUser = await userRepo.findOne({ where: { email } });
     if (!registeredUser) {
       throw new HttpError(400, "BadRequestError", "User validation failed");

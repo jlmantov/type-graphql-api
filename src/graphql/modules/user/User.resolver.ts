@@ -1,5 +1,5 @@
 import { Arg, Ctx, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { UserEmail } from "../../../orm/entity/UserEmail";
 import { revokeRefreshTokens } from "../../../utils/auth";
@@ -18,7 +18,8 @@ export class UserResolver {
   @UseMiddleware(isAuthGql)
   users(): Promise<User[]> {
     // tell TypeScript that users returns a promise with an array of type User
-    return getConnection().getRepository(User).find();
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    return userRepo.find();
   }
 
   /**
@@ -33,7 +34,10 @@ export class UserResolver {
     @Arg("password") password: string
   ): Promise<User | null> {
     // tell TypeScript that getUser returns a promise of type User or null
-    const user = await getConnection().getRepository(User).findOne({ where: { email } });
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const user = await userRepo.findOne({
+      where: { email },
+    });
     if (!user) {
       throw new HttpError(204, "BadRequestError", "Not found");
     }
@@ -91,26 +95,24 @@ export class UserResolver {
   async confirmEmail(@Arg("uuid") uuid: string): Promise<boolean> {
     // tell TypeScript that confirmEmail returns a promise of type boolean
 
-    const userConfirmation = await getConnection()
-      .getRepository(UserEmail)
-      .findOne({ where: { uuid } });
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
+    const userConfirmation = await emailRepo.findOne({ where: { uuid } });
     // console.log("userConfirmation", userConfirmation);
     if (userConfirmation === undefined) {
       return false;
     }
 
-    const user = await getConnection()
-      .getRepository(User)
-      .findOne({ where: { email: userConfirmation.email } });
+    const user = await userRepo.findOne({ where: { email: userConfirmation.email } });
     // console.log("user", user);
     if (!user) {
       return false;
     }
 
-    const success = await getConnection().getRepository(User).update(user.id, { confirmed: true });
+    const success = await userRepo.update(user.id, { confirmed: true });
     if (success.affected === 1) {
       // only cleanup if user login was actually enabled
-      getConnection().getRepository(UserEmail).delete(userConfirmation.id);
+      await emailRepo.delete(userConfirmation.id);
     }
     return true;
   }
@@ -137,14 +139,15 @@ export class UserResolver {
 
     userEmails.map(async (outdated: UserEmail) => {
       // cleanup table Users
-      const userRepo = await getConnection().getRepository(User);
+      const userRepo = getConnection().getRepository("User") as Repository<User>;
       const user = await userRepo.findOne({ where: { email: outdated.email, confirmed: false } });
       if (user) {
         userRepo.delete(user.id);
       }
 
       // cleanup table UserEmails
-      getConnection().getRepository(UserEmail).delete(outdated.id);
+      const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
+      await emailRepo.delete(outdated.id);
     });
 
     return true;

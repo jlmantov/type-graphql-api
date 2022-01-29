@@ -18,14 +18,14 @@ import { resetPasswordHtml } from "./resetPasswordForm";
  */
 export const confirmUserEmail = async (req: Request, res: Response) => {
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
-  const userEmailRepo = await getConnection().getRepository(UserEmail);
-  const userConfirmation = await userEmailRepo.findOne({
+  const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
+  const userConfirmation = await emailRepo.findOne({
     where: { uuid: req.params.id, reason: CONFIRMUSER },
   });
   if (userConfirmation === undefined) {
     res.status(400).send("Expired or unknown id, please register again");
   } else {
-    const userRepo = await getConnection().getRepository(User);
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
     const user = await userRepo.findOne({ where: { email: userConfirmation.email } });
     if (!user) {
       res.status(400).send("Not found");
@@ -33,7 +33,7 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
       const success = await userRepo.update(user.id, { confirmed: true });
       if (success.affected === 1) {
         // only cleanup if user login was actually enabled
-        await userEmailRepo.delete(userConfirmation.id);
+        await emailRepo.delete(userConfirmation.id);
       }
       res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
     }
@@ -52,15 +52,15 @@ export const confirmUserEmail = async (req: Request, res: Response) => {
  */
 export const resetPasswordForm = async (req: Request, res: Response) => {
   // request endpoint is "/user/confirm/:id" - this means that req.params.id is defined when this method is called
-  const userReset = await getConnection()
-    .getRepository(UserEmail)
-    .findOne({ where: { uuid: req.params.id, reason: RESETPWD } });
+  const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
+  const userReset = await emailRepo.findOne({ where: { uuid: req.params.id, reason: RESETPWD } });
   if (userReset === undefined) {
     res.status(400).json({ error: "Expired or unknown id, please reset again!" });
   } else {
-    const user = await getConnection()
-      .getRepository(User)
-      .findOne({ where: { email: userReset.email } });
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const user = await userRepo.findOne({
+      where: { email: userReset.email },
+    });
     if (!user) {
       res.status(400).json({ error: "Not found!" });
     } else {
@@ -126,7 +126,8 @@ export const sendUserEmail = async (email: string, reason: string) => {
 
   // Preview only available when sending through an Ethereal account
   // TO DO - log nodemailer link to DB instead of console.log
-  console.log("User created. Nodemailer preview URL: " + nodemailer.getTestMessageUrl(info));
+  const testMsgUrl = await nodemailer.getTestMessageUrl(info);
+  console.log("User created. Nodemailer preview URL: " + testMsgUrl);
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 };
 

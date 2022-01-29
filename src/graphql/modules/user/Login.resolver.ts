@@ -1,5 +1,5 @@
 import { Arg, Ctx, Field, ObjectType, Query, Resolver } from "type-graphql";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { createAccessToken, createRefreshToken, sendRefreshToken } from "../../../utils/auth";
 import { verifyPwd } from "../../../utils/crypto";
@@ -25,7 +25,8 @@ export class LoginResolver {
     @Ctx() ctx: GraphqlContext
   ): Promise<LoginResponse> {
     // tell TypeScript that login returns a promise of type LoginResponse
-    const user = await getConnection().getRepository(User).findOne({ where: { email } });
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const user = await userRepo.findOne({ where: { email } }) as User;
 
     if (!user) {
       throw new HttpError(403, "AuthorizationError", "Invalid email or password");

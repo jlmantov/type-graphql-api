@@ -1,5 +1,5 @@
 import { MiddlewareFn } from "type-graphql";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { User } from "../../../orm/entity/User";
 import { getJwtPayload, JwtAccessPayload } from "../../../utils/auth";
 import HttpError from "../../../utils/httpError";
@@ -42,7 +42,8 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
     }
 
-    const user = await getConnection().getRepository(User).findOne(context.user.id);
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const user = await userRepo.findOne(context.user.id);
     if (!user) {
       // did network, DB or something else fail?
       throw new HttpError(500, "InternalServerError", "User validation failed");

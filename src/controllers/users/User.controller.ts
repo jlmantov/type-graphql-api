@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getConnection } from "typeorm";
+import { getConnection, Repository } from "typeorm";
 import { User } from "../../orm/entity/User";
 import { confirmUserEmail, resetPasswordForm } from "../../utils/sendEmail";
 import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
@@ -10,7 +10,8 @@ import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
  * @param res
  */
 export const users_get = async (_req: Request, res: Response) => {
-  const users = await getConnection().getRepository(User).find();
+  const userRepo = getConnection().getRepository("User") as Repository<User>;
+  const users = await userRepo.find();
   res.status(200).json({ users: users });
 };
 
