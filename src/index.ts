@@ -6,11 +6,15 @@ import { createConnection } from "typeorm";
 import app from "./app";
 import { createSchema } from "./graphql/utils/createSchema";
 
-// lambda function calling itself immediately - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
-const bootstrap = async () => {
+// lambda function calling itself immediately (closure) - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
+(async () => {
   // development, test, production etc.
-  const envfile = __dirname + "/../.env." + (process.env.NODE_ENV || "development");
-  dotenv.config({ path: envfile });
+  // package.json ex.: mycmd: "set NODE_ENV=test && npm run mycmd" => NODE_ENV='test ' due to the whitespace before '&&'
+  const envfile = __dirname + "/../.env." + (process.env.NODE_ENV?.trim() || "development");
+  const envConf = dotenv.config({ path: envfile });
+  if (envConf?.parsed?.DOMAIN === "localhost") {
+    console.log("Configuration environment:", envConf?.parsed?.NODE_ENV);
+  }
 
   await createConnection(); // create database connection
 
@@ -35,6 +39,5 @@ const bootstrap = async () => {
   app.listen(port, () => {
     console.log(`Express server started at port ${port}`);
   });
-};
+})();
 
-bootstrap();
