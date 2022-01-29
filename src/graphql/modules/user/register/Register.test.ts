@@ -1,8 +1,8 @@
 import faker from "faker";
-import { Connection } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { User } from "../../../../orm/entity/User";
 import { gqlCall } from "../../../../test-utils/gqlCall";
-import { testConn } from "../../../../test-utils/testConn";
+import testConn from "../../../../test-utils/testConn";
 
 /**
  * the graphql schema is called directly, using the graphql(...) function.
@@ -28,11 +28,13 @@ mutation Register($firstname: String!, $lastname: String!, $email: String!, $pas
 `;
 
 describe("Register resolver", () => {
-  var conn: Connection;
-  var fakeUser: { firstname: string; lastname: string; email: string; password: string };
+  let conn: Connection;
+  let userRepo: Repository<User>;
+  let fakeUser: { firstname: string; lastname: string; email: string; password: string };
 
   beforeAll(async () => {
-    conn = await testConn();
+    conn = await testConn.create();
+    userRepo = conn.getRepository("User");
     // console.log("Register.test.ts DB: " + conn.driver.database);
     fakeUser = {
       firstname: faker.name.firstName(),
@@ -43,7 +45,11 @@ describe("Register resolver", () => {
   });
 
   afterAll(async () => {
-    conn.isConnected && (await conn.close());
+    conn.isConnected && await conn.close();
+  });
+
+  beforeEach(async () => {
+    // await conn.clear();
   });
 
   /**
@@ -51,13 +57,20 @@ describe("Register resolver", () => {
    */
   test("Create user - success", async () => {
     // console.log("fakeUser: ", fakeUser);
-    expect(fakeUser.email.length).toBeGreaterThan(0)
+    expect(fakeUser.email.length).toBeGreaterThan(0);
 
     const response = await gqlCall({
       source: registerMutation,
       variableValues: fakeUser,
     });
 
+    // const entities: string[] = [];
+    // conn.entityMetadatas.forEach((entity) => {
+    //   entities.push(entity.targetName);
+    // });
+    // console.log("Create user (success) - Entities: " + JSON.stringify(entities, null, 2));
+
+    expect(response.data).toBeDefined();
     expect(response).toMatchObject({
       data: {
         register: {
@@ -70,7 +83,8 @@ describe("Register resolver", () => {
       },
     });
 
-    const user = await conn.getRepository(User).findOne({ where: { email: fakeUser.email } });
+    const user = await userRepo.findOne({ where: { email: fakeUser.email } });
+    // console.log("Create user (success) - userRepo.findOne: " + JSON.stringify(user, null, 2));
     expect(user).toBeDefined();
     expect(user?.firstName).toEqual(fakeUser.firstname);
     expect(user?.confirmed).toBeFalsy();
@@ -100,5 +114,20 @@ describe("Register resolver", () => {
    * in the database - e.g.: 'database down', 'network failure' - stuff like that.
    * For now, I accept that this scenario is not tested.
    */
+  test("Error scenario: unable to create user", async () => {
+    fakeUser = {
+      firstname: await faker.name.firstName(),
+      lastname: await faker.name.lastName(),
+      email: "",
+      password: "",
+    };
 
+    const response = await gqlCall({
+      source: registerMutation,
+      variableValues: fakeUser,
+    });
+    console.log("Error scenario: unable to create user - response: ", response);
+
+    expect(response.errors).toBeDefined();
+  });
 });

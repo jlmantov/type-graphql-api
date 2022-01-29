@@ -1,9 +1,9 @@
 import faker from "faker";
-import { Connection } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { registerMutation } from "../graphql/modules/user/register/Register.test";
 import { User } from "../orm/entity/User";
 import { gqlCall } from "./gqlCall";
-import { testConn } from "./testConn";
+import testConn from "./testConn";
 
 /**
  * the graphql schema is called directly, using the graphql(...) function.
@@ -36,7 +36,8 @@ query GetUser($email: String!, $password: String!) {
 }`;
 
 describe("gqlCall test-util", () => {
-  var conn: Connection;
+  let conn: Connection;
+  let userRepo: Repository<User>;
   const fakeUser = {
     firstname: faker.name.firstName(),
     lastname: faker.name.lastName(),
@@ -45,8 +46,9 @@ describe("gqlCall test-util", () => {
   };
 
   beforeAll(async () => {
-    conn = await testConn();
-    // console.log("gqlCall.test.ts DB: ", conn.driver.database);
+    conn = await testConn.create();
+    userRepo = conn.getRepository("User");
+    // console.log("gqlCall.test.ts DB: " + conn.driver.database);
   });
 
   afterAll(async () => {
@@ -57,9 +59,9 @@ describe("gqlCall test-util", () => {
    *
    */
   test("create test user - success", async () => {
-    const alreadyExist = await conn
-      .getRepository(User)
-      .findOne({ where: { email: fakeUser.email } });
+    const alreadyExist = await userRepo.findOne({
+      where: { email: fakeUser.email },
+    });
     if (alreadyExist && alreadyExist.email === fakeUser.email) {
       // During development, using `jest --watchAll`, the database will not be reset on every run.
       // This will allow continuous runs and stop jest from reporting an error that really isn't an error
@@ -84,7 +86,7 @@ describe("gqlCall test-util", () => {
         },
       });
 
-      const user = await conn.getRepository(User).findOne({ where: { email: fakeUser.email } });
+      const user = await userRepo.findOne({ where: { email: fakeUser.email } });
       expect(user).toBeDefined();
       expect(user?.firstName).toEqual(fakeUser.firstname);
       expect(user?.confirmed).toBeFalsy();

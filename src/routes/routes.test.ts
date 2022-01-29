@@ -1,11 +1,11 @@
 import faker from "faker";
 import request from "supertest";
-import { Connection } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import app from "../app";
 import { registerMutation } from "../graphql/modules/user/register/Register.test";
 import { User } from "../orm/entity/User";
 import { gqlCall } from "../test-utils/gqlCall";
-import { testConn } from "../test-utils/testConn";
+import testConn from "../test-utils/testConn";
 import { createRefreshToken } from "../utils/auth";
 
 /**
@@ -22,10 +22,12 @@ import { createRefreshToken } from "../utils/auth";
  */
 describe("Main routes - Landingpage + Renew Access token", () => {
   let conn: Connection;
+  let userRepo: Repository<User>;
   let user: User;
 
   beforeAll(async () => {
-    conn = await testConn();
+    conn = await testConn.create();
+    userRepo = conn.getRepository("User");
     // console.log("routes.test.ts DB: " + conn.driver.database);
 
     const fakeUser = {
@@ -40,7 +42,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
     });
     if (!!result.data && result.data.register) {
       user = result.data.register;
-      await conn.getRepository(User).increment({ id: user.id }, "confirmed", 1); // allow user to login
+      await userRepo.increment({ id: user.id }, "confirmed", 1); // allow user to login
       user.confirmed = true;
       user.tokenVersion = 0; // used by '/renew_accesstoken'
     }
@@ -101,7 +103,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       expect(user).toBeDefined();
 
       // invalidate tokenVersion in payload by incrementing tokenVersion in DB
-      const result = await conn.getRepository(User).increment({ id: user.id }, "tokenVersion", 1);
+      const result = await userRepo.increment({ id: user.id }, "tokenVersion", 1);
       expect(result.affected).toBe(1);
 
       const refreshToken = await createRefreshToken(user);

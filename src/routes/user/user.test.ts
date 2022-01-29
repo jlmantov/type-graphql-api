@@ -1,13 +1,13 @@
 import faker from "faker";
 import request from "supertest";
-import { Connection } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { CONFIRMUSER } from ".";
 import app from "../../app";
 import { registerMutation } from "../../graphql/modules/user/register/Register.test";
 import { User } from "../../orm/entity/User";
 import { UserEmail } from "../../orm/entity/UserEmail";
 import { gqlCall } from "../../test-utils/gqlCall";
-import { testConn } from "../../test-utils/testConn";
+import testConn from "../../test-utils/testConn";
 import { createAccessToken } from "../../utils/auth";
 
 /**
@@ -25,11 +25,15 @@ import { createAccessToken } from "../../utils/auth";
  * POST "/user/resetpwd/:id" - activated from newPasswordForm_get
  */
 describe("User", () => {
-  var conn: Connection;
-  var user: User;
+  let conn: Connection;
+  let userRepo: Repository<User>;
+  let emailRepo: Repository<UserEmail>;
+  let user: User;
 
   beforeAll(async () => {
-    conn = await testConn();
+    conn = await testConn.create();
+    userRepo = conn.getRepository("User");
+    emailRepo = conn.getRepository("UserEmail");
     // console.log("user.test.ts DB: " + conn.driver.database);
 
     const fakeUser = {
@@ -44,7 +48,7 @@ describe("User", () => {
     });
     if (!!result.data && result.data.register) {
       user = result.data.register;
-      await conn.getRepository(User).increment({ id: user.id }, "confirmed", 1); // allow user to login
+      await userRepo.increment({ id: user.id }, "confirmed", 1); // allow user to login
       user.confirmed = false;
       user.tokenVersion = 0; // used by '/renew_accesstoken'
     }
@@ -115,10 +119,10 @@ describe("User", () => {
    * 6. When user activates email-link, user client is redirected to landing page
    */
   describe("Register user, Email confirmation - GET /user/confirm/:id", () => {
-    var userEmail: UserEmail | undefined;
+    let userEmail: UserEmail | undefined;
 
     beforeAll(async () => {
-      userEmail = await conn.getRepository(UserEmail).findOne({
+      userEmail = await emailRepo.findOne({
         where: { email: user.email },
       });
     });
@@ -139,12 +143,12 @@ describe("User", () => {
         .send(); // no authentication header
 
       // 4. When user activates email-link, login is enabled
-      const userActive = await conn.getRepository(User).findOne({ id: user!.id });
+      const userActive = await userRepo.findOne({ id: user!.id });
       expect(userActive).toBeDefined();
       expect(userActive!.confirmed).toBe(true);
 
       // 5. When user activates email-link, email-link is removed
-      const userEmailActive = await conn.getRepository(UserEmail).findOne({
+      const userEmailActive = await emailRepo.findOne({
         where: {
           email: user!.email,
           reason: CONFIRMUSER,
