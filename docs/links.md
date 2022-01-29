@@ -49,6 +49,16 @@ I have also thought about [how to organize and store accounts, emails and person
 
 - [Nodemailer](https://nodemailer.com/about/)
 
+### Typescript
+
+- [The TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+<!-- - [How to set up Typescript compiler and editing environment with Node.js](https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d) -->
+- [How to set up Typescript compiler and editing environment with Node.js](https://techsparx.com/nodejs/typescript/setup.html)
+- [Complete guide to using TypeORM and TypeScript for data persistence in Node.js module](https://levelup.gitconnected.com/complete-guide-to-using-typeorm-and-typescript-for-data-persistence-in-node-js-module-bfce169959d9)
+- [TS-node (npm)](https://www.npmjs.com/package/ts-node)
+- [TypeScript in Visual Studio Code](https://code.visualstudio.com/Docs/languages/typescript)
+- []()
+
 ### Test
 
 - [JEST - Getting started](https://jestjs.io/docs/getting-started)
@@ -58,6 +68,9 @@ I have also thought about [how to organize and store accounts, emails and person
 - [RIP Tutorial - jest (ts-jest)](https://riptutorial.com/typescript/example/29207/jest--ts-jest-)
 - [Node.js (Express) with TypeScript, Eslint, Jest, Prettier and Husky - Part 3](https://dev.to/ornio/node-js-express-with-typescript-eslint-jest-prettier-and-husky-part-3-1l8c)
 - [Testing Typescript Api With Jest and Supertest](https://tutorialedge.net/typescript/testing-typescript-api-with-jest/)
+
+- [stackOverflow - Getting RepositoryNotFoundError in typeorm but I'm pretty sure they are registered](https://stackoverflow.com/questions/62728306/getting-repositorynotfounderror-in-typeorm-but-im-pretty-sure-they-are-register)
+
 - [Sam Meech-Ward - Testing Node Server with Jest and Supertest](https://www.youtube.com/watch?v=FKnzS_icp20)
 
 - [Alex Losikov: Part 4. Node.js + Express + TypeScript: Unit Tests with Jest](https://losikov.medium.com/part-4-node-js-express-typescript-unit-tests-with-jest-5204414bf6f0)
