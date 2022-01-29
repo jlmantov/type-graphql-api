@@ -1,4 +1,4 @@
-import { ExecutionResult, graphql, GraphQLSchema } from "graphql";
+import { graphql, GraphQLSchema } from "graphql";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { createSchema } from "../graphql/utils/createSchema";
 
@@ -39,7 +39,7 @@ export const gqlCall = async ({ source, variableValues, userId }: Options) => {
 
   // https://www.npmjs.com/package/graphql
   // graphql.org/graphql-js/graphql/
-  return graphql({
+  const response = await graphql({
     schema,
     source,
     variableValues,
@@ -51,8 +51,7 @@ export const gqlCall = async ({ source, variableValues, userId }: Options) => {
       },
       res: {},
     },
-  }).then((response: ExecutionResult<{ [key: string]: any }, { [key: string]: any }>) => {
-    // console.log("graphql response: ", response);
-    return response; // ExecutionResult contains either error OR data
   });
+  // console.log("gqlCall response: ", response);
+  return response; // ExecutionResult contains either error OR data
 };
