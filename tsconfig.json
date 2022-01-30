@@ -3,6 +3,11 @@
 // TypeORM: https://orkhan.gitbook.io/typeorm/docs/example-with-express
 // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
 // https://levelup.gitconnected.com/complete-guide-to-using-typeorm-and-typescript-for-data-persistence-in-node-js-module-bfce169959d9
+//
+// Difference between dev-config and prod-config (false in prod-config):
+// "inlineSourceMap": true, // https://www.typescriptlang.org/tsconfig#inlineSourceMap
+// "inlineSources": true, // https://www.typescriptlang.org/tsconfig#inlineSources
+// "declaration": true, // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
 {
   "compilerOptions": {
     "target": "es6",
@@ -13,9 +18,9 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "sourceMap": false,
-    "inlineSourceMap": false, // https://www.typescriptlang.org/tsconfig#inlineSourceMap
-    "inlineSources": false, // https://www.typescriptlang.org/tsconfig#inlineSources
-    "declaration": false, // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
+    "inlineSourceMap": true, // https://www.typescriptlang.org/tsconfig#inlineSourceMap
+    "inlineSources": true, // https://www.typescriptlang.org/tsconfig#inlineSources
+    "declaration": true, // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
     "declarationMap": false, // https://www.typescriptlang.org/tsconfig#declarationMap
 
     "composite": false,

@@ -4,7 +4,7 @@
 // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
 // https://levelup.gitconnected.com/complete-guide-to-using-typeorm-and-typescript-for-data-persistence-in-node-js-module-bfce169959d9
 //
-// Until package.json commands are validated, keep config identical to tsconfig.json
+// Difference between dev-config and prod-config (true in dev-config):
 // "inlineSourceMap": false, // https://www.typescriptlang.org/tsconfig#inlineSourceMap
 // "inlineSources": false, // https://www.typescriptlang.org/tsconfig#inlineSources
 // "declaration": false, // https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d
