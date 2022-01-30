@@ -889,7 +889,7 @@ Here's the key:
 
 - in Typescript, instanceof is used to test the data type definitions
 - In Javascript, instanceof searches for type references in the prototype constructor chain (super classes included) - meaning that if the class was never instantiated (using the keyword `new` &lt;Entity&gt;), `instanceof` will return `false`.
-- when referring `TYPEORM_ENTITIES` = **src**/orm/entity/\*_/\_\__.ts\_\_, the jest runtime uses Typescript webpack configuration
-- when referring `TYPEORM_ENTITIES` = **dist**/orm/entity/\*_/\_\__.js\_\_, the jest runtime uses JavaScript webpack configuration
+- when referring `TYPEORM_ENTITIES` = **src**/orm/entity/\*\*/**\*.ts**, the jest runtime uses Typescript webpack configuration
+- when referring `TYPEORM_ENTITIES` = **dist**/orm/entity/\*\*/**\*.js**, the jest runtime uses JavaScript webpack configuration
 
 That's why the bug didn't show until running the dist code.
