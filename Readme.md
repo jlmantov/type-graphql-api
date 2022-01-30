@@ -870,4 +870,26 @@ This way I am allowed to customize settings (DB login), compiler options (TypeSc
 
 While `package.json`'s script section is heavily modified, database reset is also altered. The previous `src/test-utils/resetTestDB.ts` is removed in exchange with environment specific commands.
 
-### User test continued
+### `instanceof` - JavaScript vs Typescript
+
+Introducing staging environment means running the test suite on distribution code. _Good idea!_
+
+It turned out, I had a bug that was actually pretty hard to find ...
+
+1.  All tests worked fine until testing staginglocal, the distribution code
+2.  Complexity in environment settings, database permissions, command similarities/differences in `package.json` - lots of stuff could be wrong here
+3.  indications point in the direction of an issue related to TypeORM entities
+    - I tried changing `TYPEORM_ENTITIES` from **dist**/orm/entity/\*\*/**\*.js** to **src**/orm/entity/\*\*/**\*.ts**
+    - that change made all tests run smoothly again.
+4.  ...but then again - not ALL tests failed, only a bunch of them failed !?
+
+It turned out that `src/utils/sendEmail.ts` had a conditional behaviour using `instanceof` on the typeORM return value.
+
+Here's the key:
+
+- in Typescript, instanceof is used to test the data type definitions
+- In Javascript, instanceof searches for type references in the prototype constructor chain (super classes included) - meaning that if the class was never instantiated (using the keyword `new` &lt;Entity&gt;), `instanceof` will return `false`.
+- when referring `TYPEORM_ENTITIES` = **src**/orm/entity/\*_/\_\__.ts\_\_, the jest runtime uses Typescript webpack configuration
+- when referring `TYPEORM_ENTITIES` = **dist**/orm/entity/\*_/\_\__.js\_\_, the jest runtime uses JavaScript webpack configuration
+
+That's why the bug didn't show until running the dist code.
