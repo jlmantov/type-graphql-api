@@ -4,8 +4,6 @@ import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOpti
 
 /**
  * TypeORM createConnection to a database specifically created for unit testing.
- *
- * @returns TypeORM DB Connection
  */
 const connection = {
   async create() {
@@ -30,33 +28,33 @@ const connection = {
       migrations: [`${process.env.TYPEORM_MIGRATIONS}`],
       subscribers: [`${process.env.TYPEORM_SUBSCRIBERS}`],
     };
-    console.log(
-      "testConn config: [" +
-        process.env.TYPEORM_DATABASE +
-        "]" +
-        "'" +
-        connOptions.username +
-        "'@'" +
-        connOptions.host +
-        "':" +
-        connOptions.port
-    );
+    // console.log(
+    //   "testConn config: [" + process.env.TYPEORM_DATABASE + "]" +
+    //     "'" + connOptions.username + "'@'" + connOptions.host + "':" + connOptions.port
+    // );
     const conn = await createConnection(connOptions);
     return conn;
   },
 
   async close() {
-    await getConnection().close();
+    return await getConnection().close();
   },
 
   async clear() {
-    const connection = getConnection();
-    const entities = connection.entityMetadatas;
+    const conn = getConnection();
+    if (!conn.isConnected) {
+      throw new Error("TypeORM NOT connected, unable to clear entities!");
+    }
 
-    entities.forEach(async (entity) => {
-      const repository = connection.getRepository(entity.name);
-      await repository.query(`DELETE FROM ${entity.tableName}`);
-    });
+    const entities = conn.entityMetadatas;
+    const clearResults = [];
+    for (const entity of entities) {
+      const repo = conn.getRepository(entity.name);
+      const qRes = await repo.query(`DELETE FROM ${entity.tableName}`); // https://dev.mysql.com/doc/internals/en/generic-response-packets.html
+      // console.log(`Clearing ${entity.name} - result:`, JSON.stringify(qRes, null, 2));
+      clearResults.push({ entityName: entity.name, result: qRes });
+    }
+    return clearResults;
   },
 };
 
