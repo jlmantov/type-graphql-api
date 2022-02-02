@@ -852,7 +852,7 @@ Errorhandling [as middleware](https://wanago.io/2018/12/17/typescript-express-er
 ## TypeORM Migrations
 
 The database layout needs to be synchronized with the TypeORM models.
-Moving the project into production requires ability to maintain data while upgrading DB layout - [TypeORM Migrations](https://typeorm.io/#/migrations) does exacltly that.
+Moving the project into production requires ability to maintain data while upgrading DB layout - [TypeORM Migrations](https://typeorm.io/#/migrations) does exactly that.
 
 Project strategy is this:
 
