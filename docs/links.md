@@ -18,12 +18,12 @@ I have also thought about [how to organize and store accounts, emails and person
 
 - [Dev.to: Node.js best practices list (July 2021)](https://dev.to/alexandrefreire/node-js-best-practices-list-july-2021-3p4k)
 
-### Development
+## Development
 
-- [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
 - [Introduction to GraphQL](https://graphql.org/learn/)
 - [TypeGraphQL Docs](https://typegraphql.com/docs/introduction.html)
 - [TypeORM](https://typeorm.io/#/)
+- [TypeORM - Quick Guide (tutorialspoint.com)](https://www.tutorialspoint.com/typeorm/typeorm_quick_guide.htm)
 - [Building a CRUD-backend with GraphQL, TypeScript and TypeGraphQL](https://dev.to/lastnameswayne/building-a-crud-backend-with-graphql-typescript-and-typegraphql-4h71)
 - [How to use GraphQL with Postman – Postman testing with GraphQL](https://www.apollographql.com/blog/tooling/graphql-ide/how-to-use-graphql-with-postman/)
 - [GraphQL Clients](https://graphql.org/graphql-js/graphql-clients/)
@@ -33,16 +33,10 @@ I have also thought about [how to organize and store accounts, emails and person
 - [Building a password hasher in Node.js](https://blog.logrocket.com/building-a-password-hasher-in-node-js/)
 - [tabnine: How to use hash function in argon2](https://www.tabnine.com/code/javascript/functions/argon2/hash)
 
-- [Express](https://expressjs.com/)
-- [Apollo Server](https://www.apollographql.com/docs/apollo-server/integrations/#apollo-server-express)
-- [Apollo Server middleware](https://www.apollographql.com/docs/apollo-server/integrations/middleware/#apollo-server-express)
 - [POST JSON With Bearer Token Authorization Header [JavaScript/AJAX Code]](https://reqbin.com/req/javascript/h4rnefmw/post-json-with-bearer-token-authorization-header)
 - [Postman - Working with GraphQL - Using JSON request body](https://documenter.getpostman.com/view/11644629/TVCcWUHu#711cbee3-46b4-4520-a49d-867c1ad9e87f)
 - [Cross-Origin Resource Sharing (CORS)](https://web.dev/cross-origin-resource-sharing/)
 - [Making a CORS Request - HTML5 Rocks](https://www.html5rocks.com/en/tutorials/cors//)
-- [Express cors middleware](https://expressjs.com/en/resources/cors.html)
-- [MDN Express Tutorial Part 4: Routes and controllers](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/routes)
-- [wanago.io: TypeScript Express tutorial #3. Error handling and validating incoming data](https://wanago.io/2018/12/17/typescript-express-error-handling-validation/)
 
 - [body-parser](https://www.npmjs.com/package/body-parser)
 - [graphql-tag](https://www.npmjs.com/package/graphql-tag)
@@ -52,12 +46,25 @@ I have also thought about [how to organize and store accounts, emails and person
 ### Typescript
 
 - [The TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
 <!-- - [How to set up Typescript compiler and editing environment with Node.js](https://medium.com/@7genblogger/how-to-set-up-typescript-compiler-and-editing-environment-with-node-js-68952aebbe1d) -->
 - [How to set up Typescript compiler and editing environment with Node.js](https://techsparx.com/nodejs/typescript/setup.html)
 - [Complete guide to using TypeORM and TypeScript for data persistence in Node.js module](https://levelup.gitconnected.com/complete-guide-to-using-typeorm-and-typescript-for-data-persistence-in-node-js-module-bfce169959d9)
 - [TS-node (npm)](https://www.npmjs.com/package/ts-node)
 - [TypeScript in Visual Studio Code](https://code.visualstudio.com/Docs/languages/typescript)
 - []()
+
+### Express
+- [Express](https://expressjs.com/)
+- [Beginner's guide to building a server using Express as a Node.js framework](https://dev.to/lisahjung/beginner-s-guide-to-building-a-server-with-express-js-29c3)
+- [Using middleware](https://expressjs.com/en/guide/using-middleware.html)
+- [Writing middleware for use in Express apps](https://expressjs.com/en/guide/writing-middleware.html)
+- [Apollo Server](https://www.apollographql.com/docs/apollo-server/integrations/#apollo-server-express)
+- [Apollo Server middleware](https://www.apollographql.com/docs/apollo-server/integrations/middleware/#apollo-server-express)
+- [Express cors middleware](https://expressjs.com/en/resources/cors.html)
+- [MDN Express Tutorial Part 4: Routes and controllers](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/routes)
+- [wanago.io: TypeScript Express tutorial #3. Error handling and validating incoming data](https://wanago.io/2018/12/17/typescript-express-error-handling-validation/)
+
 
 ### Test
 
