@@ -8,37 +8,35 @@ function errorMiddleware(
   _next: NextFunction
 ) {
   let status = error.status || 500; // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-  // let name = error.name || "Internal Server Error";
   let message = error.message || "Something went wrong";
 
-  // console.log("error.middleware " + error.status + ": " + error.name + " - " + error.message);
-  // 1. log error, what deeper layers might have reported
-  // 2. generalize error message - discreet, polite and protective against malign attackers
+  // 1. Error is already logged
+  // 2. Generalize response message - discreet, polite and protective against malign attackers
+
+  // status >= 100 - Information responses
+  // status >= 200 - Successful responses
+  // status >= 300 - Redirection messages
+
+  if (error.status >= 400) {
+    // Client error - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses
+    status = 400; // "Bad Request";
+    message = "Expired or invalid input";
+  }
+  if (error.status === 401) {
+    status = 401; // "Unauthorized";
+    message = "Not authenticated";
+  }
+  if (error.status === 403) {
+    status = 403; // "Forbidden";
+    message = "Access expired, please login again";
+  }
+
   if (error.status >= 500) {
     // Server error - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#server_error_responses
-    status = 500;
-    // name = "Internal Server Error";
+    status = 500; // "Internal Server Error";
     message = "Something went wrong";
-  } else if (error.status >= 400) {
-    // Client error - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#client_error_responses
-    if (error.status === 403) {
-      // name = "Forbidden";
-      message = "Access expired, please login again";
-    } else if (error.status === 401) {
-      // name = "Unauthorized";
-      message = "Not authenticated";
-    } else  {
-      status = 400;
-      // name = "Bad Request";
-      message = "Expired or invalid input";
-    }
-  } else {
-    // Allow status + message to pass through
-    //
-    // status >= 300 - Redirection messages
-    // status >= 200 - Successful responses
-    // status >= 100 - Information responses
   }
+
   response.status(status).send(message);
 }
 

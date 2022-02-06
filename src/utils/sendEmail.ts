@@ -7,6 +7,7 @@ import { UserEmail } from "../orm/entity/UserEmail";
 import { CONFIRMUSER, RESETPWD } from "../routes/user";
 import { createResetPasswordToken } from "./auth";
 import HttpError from "./httpError";
+import logger from "./middleware/winstonLogger";
 import { resetPasswordHtml } from "./resetPasswordForm";
 
 /**
@@ -121,13 +122,13 @@ export const sendUserEmail = async (email: string, reason: string) => {
   }
 
   const info = await transporter.sendMail(mailOptions);
-  // console.log("Message sent: %s", info.messageId);
+  // logger.debug("Message sent: %s", info.messageId);
   // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
 
   // Preview only available when sending through an Ethereal account
   // TO DO - log nodemailer link to DB instead of console.log
   const testMsgUrl = await nodemailer.getTestMessageUrl(info);
-  console.log("User created. Nodemailer preview URL: " + testMsgUrl);
+  logger.info(mailOptions.subject +". Nodemailer preview URL: " + testMsgUrl);
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 };
 
@@ -152,13 +153,13 @@ const createEmailUrl = async (email: string, reason: string) => {
 
   const oldEmail = await emailRepo.findOne({ where: { email, reason } });
   if (oldEmail) {
-    console.log("emailRepo.delete(" + oldEmail.id + ")");
+    logger.debug("emailRepo.delete(" + oldEmail.id + ")");
     await emailRepo.delete(oldEmail.id); // delete + create instead of updating uuid, timestamp etc.
   }
 
   const result = await emailRepo.create({ email, reason, uuid }).save();
   if (result?.email !== email || result?.reason !== reason || result?.uuid !== uuid) {
-    console.log("emailRepo.create ERROR - result:", result);
+    logger.error("emailRepo.create ERROR - result:", result);
     throw new HttpError(500, "InternalServerError", "Creating new email failed");
   }
 

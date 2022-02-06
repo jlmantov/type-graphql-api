@@ -26,19 +26,13 @@ export class LoginResolver {
   ): Promise<LoginResponse> {
     // tell TypeScript that login returns a promise of type LoginResponse
     const userRepo = getConnection().getRepository("User") as Repository<User>;
-    const user = await userRepo.findOne({ where: { email } }) as User;
+    const user = (await userRepo.findOne({ where: { email } })) as User;
 
     if (!user) {
       throw new HttpError(403, "AuthorizationError", "Invalid email or password");
     }
 
-    let validated = false;
-    try {
-      validated = await verifyPwd(password, user.password);
-    } catch (error) {
-      throw error;
-    }
-
+    const validated = await verifyPwd(password, user.password);
     if (!validated) {
       throw new HttpError(403, "AuthorizationError", "Invalid username or password");
     }

@@ -3,6 +3,7 @@ import { Connection, Repository } from "typeorm";
 import { User } from "../../../../orm/entity/User";
 import { gqlCall } from "../../../../test-utils/gqlCall";
 import testConn from "../../../../test-utils/testConn";
+import logger from "../../../../utils/middleware/winstonLogger";
 import { registerMutation } from "../register/Register.test";
 
 /**
@@ -36,7 +37,7 @@ describe("Login resolver", () => {
   beforeAll(async () => {
     conn = await testConn.create();
     userRepo = conn.getRepository("User");
-    // console.log("Login.test.ts DB: " + conn.driver.database);
+    logger.info(" --- Login.test.ts DB: " + conn.driver.database);
 
     const result = await gqlCall({
       source: registerMutation,
@@ -70,7 +71,7 @@ describe("Login resolver", () => {
         password: fakeUser.password,
       },
     });
-    // console.log("email not confirmed response: ", JSON.stringify(response, null, 2));
+    // logger.debug("email not confirmed response: ", JSON.stringify(response, null, 2));
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);
@@ -95,7 +96,7 @@ describe("Login resolver", () => {
       source: loginQuery,
       variableValues: loginEmailPwd,
     });
-    console.log("Login success response: ", JSON.stringify(response, null, 2));
+    logger.debug("Login success response: ", JSON.stringify(response, null, 2));
 
     expect(response).toMatchObject({
       data: {
@@ -119,7 +120,7 @@ describe("Login resolver", () => {
       source: loginQuery,
       variableValues: loginNotWorking,
     });
-    // console.log("Login failed response: ", JSON.stringify(response, null, 2));
+    // logger.debug("Login failed response: ", JSON.stringify(response, null, 2));
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);

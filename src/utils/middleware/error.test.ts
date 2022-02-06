@@ -2,8 +2,8 @@ import express from "express";
 import { Express } from "express-serve-static-core";
 import request from "supertest";
 import HttpError from "../httpError";
-// import HttpError from "../httpError";
 import errorMiddleware from "./error";
+import logger from "./winstonLogger";
 
 /**
  *
@@ -12,13 +12,13 @@ describe("error", () => {
   let tstApp: Express;
 
   beforeAll(async () => {
-    // console.log("user.test.ts DB: " + conn.driver.database);
+    logger.info(" --- error.test.ts");
     tstApp = express();
     const testRouter = express.Router();
     testRouter.get("/", (_req, res) => res.status(200).send("OK"));
     testRouter.get("/test/:statuscode", (req, res) => {
       const _statuscode = Number(req.params.statuscode ?? 500);
-      const msg = `Underlying Error Message - status ${_statuscode}.`;
+      const msg = `TEST Error Message - status ${_statuscode}`;
       if (_statuscode === 200) {
         res.status(_statuscode).send(msg);
       } else {
@@ -34,7 +34,7 @@ describe("error", () => {
   describe("Test status 200: OK", () => {
     test("verify supertest setup", async () => {
       const res = await request(tstApp).get("/");
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,
@@ -54,7 +54,7 @@ describe("error", () => {
       const res = await request(tstApp)
         .get("/test/400")
         .set("Authorization", "bearer manipulated. Content makes no sense");
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,
@@ -69,7 +69,7 @@ describe("error", () => {
 
     test("Unhandled request - 414 URI Too Long", async () => {
       const res = await request(tstApp).get("/test/414");
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,
@@ -86,7 +86,7 @@ describe("error", () => {
   describe("Test status 401: Not authenticated", () => {
     test("No authentication header", async () => {
       const res = await request(tstApp).get("/test/401");
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,
@@ -109,7 +109,7 @@ describe("error", () => {
       const res = await request(tstApp)
         .get("/test/403")
         .set("Authorization", "bearer " + accessToken);
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,
@@ -126,7 +126,7 @@ describe("error", () => {
   describe("Test default 500: Something went wrong", () => {
     test("Unhandled request - 507 Insufficient Storage (WebDAV)", async () => {
       const res = await request(tstApp).get("/test/507");
-      // console.log("res: ",
+      // logger.debug("res: ",
       //   "\ntype:", res.type,
       //   "\nstatus:", res.status,
       //   "\ntext:", res.text,

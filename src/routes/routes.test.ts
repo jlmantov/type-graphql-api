@@ -7,6 +7,7 @@ import { User } from "../orm/entity/User";
 import { gqlCall } from "../test-utils/gqlCall";
 import testConn from "../test-utils/testConn";
 import { createRefreshToken } from "../utils/auth";
+import logger from "../utils/middleware/winstonLogger";
 
 /**
  * inpired by Sam Meech-Ward - Testing Node Server with Jest and Supertest
@@ -28,7 +29,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
   beforeAll(async () => {
     conn = await testConn.create();
     userRepo = conn.getRepository("User");
-    // console.log("routes.test.ts DB: " + conn.driver.database);
+    logger.info(" --- routes.test.ts DB: " + conn.driver.database);
 
     const fakeUser = {
       firstname: faker.name.firstName(),
@@ -55,7 +56,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
   test("GET / - should return a simple 'hello' string", async () => {
     const response = await request(app).get("/");
     expect(response.statusCode).toBe(200);
-    // console.log("response", JSON.stringify(response.text));
+    // logger.debug("response", JSON.stringify(response.text));
     expect(response.text).toEqual("hello");
   });
 

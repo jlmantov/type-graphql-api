@@ -2,6 +2,7 @@ import faker from "faker";
 import { Connection, Repository } from "typeorm";
 import { registerMutation } from "../graphql/modules/user/register/Register.test";
 import { User } from "../orm/entity/User";
+import logger from "../utils/middleware/winstonLogger";
 import { gqlCall } from "./gqlCall";
 import testConn from "./testConn";
 
@@ -48,7 +49,7 @@ describe("gqlCall test-util", () => {
   beforeAll(async () => {
     conn = await testConn.create();
     userRepo = conn.getRepository("User");
-    // console.log("gqlCall.test.ts DB: " + conn.driver.database);
+    logger.info(" --- gqlCall.test.ts DB: " + conn.driver.database);
   });
 
   afterAll(async () => {
@@ -65,14 +66,14 @@ describe("gqlCall test-util", () => {
     if (alreadyExist && alreadyExist.email === fakeUser.email) {
       // During development, using `jest --watchAll`, the database will not be reset on every run.
       // This will allow continuous runs and stop jest from reporting an error that really isn't an error
-      // console.log("John Doe found in DB, skipping this test.");
+      // logger.debug("John Doe found in DB, skipping this test.");
     } else {
-      // console.log("John Doe not found!");
+      // logger.debug("John Doe not found!");
       const response = await gqlCall({
         source: registerMutation,
         variableValues: fakeUser,
       });
-      // console.log("response: ", response);
+      // logger.debug("response: ", response);
 
       expect(response).toMatchObject({
         data: {
@@ -103,7 +104,7 @@ describe("gqlCall test-util", () => {
         email: fakeUser.email,
       },
     });
-    // console.log("response: ", response);
+    // logger.debug("response: ", response);
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);
@@ -121,7 +122,7 @@ describe("gqlCall test-util", () => {
         //   password: fakeUser.password,
       },
     });
-    // console.log("response: ", response);
+    // logger.debug("response: ", response);
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);

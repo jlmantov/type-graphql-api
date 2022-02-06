@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { createConnection, getConnection } from "typeorm";
 import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions";
+import logger from "../utils/middleware/winstonLogger";
 
 /**
  * TypeORM createConnection to a database specifically created for unit testing.
@@ -11,6 +12,7 @@ const connection = {
     const envfile = __dirname + "/../../.env." + (process.env.NODE_ENV?.trim() || "test");
     const envConf = dotenv.config({ path: envfile });
     if (envConf?.parsed?.DOMAIN === "localhost") {
+      // logger.debug("Configuration environment:("+ envConf?.parsed?.NODE_ENV +")");
     }
 
     const connOptions: MysqlConnectionOptions = {
@@ -28,10 +30,11 @@ const connection = {
       migrations: [`${process.env.TYPEORM_MIGRATIONS}`],
       subscribers: [`${process.env.TYPEORM_SUBSCRIBERS}`],
     };
-    // console.log(
-    //   "testConn config: [" + process.env.TYPEORM_DATABASE + "]" +
-    //     "'" + connOptions.username + "'@'" + connOptions.host + "':" + connOptions.port
-    // );
+    logger.debug(
+      "testConn config (env = "+ envConf?.parsed?.NODE_ENV +"): "+
+        "[" + process.env.TYPEORM_DATABASE + "]" +
+        "'" + connOptions.username + "'@'" + connOptions.host + "':" + connOptions.port
+    );
     const conn = await createConnection(connOptions);
     return conn;
   },
@@ -51,7 +54,7 @@ const connection = {
     for (const entity of entities) {
       const repo = conn.getRepository(entity.name);
       const qRes = await repo.query(`DELETE FROM ${entity.tableName}`); // https://dev.mysql.com/doc/internals/en/generic-response-packets.html
-      // console.log(`Clearing ${entity.name} - result:`, JSON.stringify(qRes, null, 2));
+      // logger.debug(`Clearing ${entity.name} - result:`, JSON.stringify(qRes, null, 2));
       clearResults.push({ entityName: entity.name, result: qRes });
     }
     return clearResults;

@@ -23,6 +23,7 @@
 - [First GraphQL resolver Test - Register](https://github.com/jlmantov/type-graphql-api#first-graphql-resolver-test---register)
 - [REST endpoint Testing: GET landing page + POST Renew accessToken](https://github.com/jlmantov/type-graphql-api#rest-endpoint-testing-get-landing-page--post-renew-accesstoken)
 - [TypeORM Migrations](https://github.com/jlmantov/type-graphql-api#typeorm-migrations)
+- [Logging](https://github.com/jlmantov/type-graphql-api#logging)
 
 ## Motivation
 
@@ -893,3 +894,18 @@ Here's the key:
 - when referring `TYPEORM_ENTITIES` = **dist**/orm/entity/\*\*/**\*.js**, the jest runtime uses JavaScript webpack configuration
 
 That's why the bug didn't show until running the dist code.
+
+## Logging
+
+Logging errors is important - but logging is also a balance... heavy logging narrows the time frame for logging (if the file size is limited as it should be).
+
+I've been playing around with two implementations:
+
+- winston + morgan
+- winston + winston-express
+
+Both methods are added to the repository since I am not sure about which one is prefered. The current settings use winston + winston-express.
+
+Also, the settings applied is kind of heavy - this is because I find it easier to remove than to add.
+
+I would propably go for a database/http logger in a real case scenario - adding another handler is considered low priority for now.

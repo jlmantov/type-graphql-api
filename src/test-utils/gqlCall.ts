@@ -1,6 +1,7 @@
 import { graphql, GraphQLSchema } from "graphql";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { createSchema } from "../graphql/utils/createSchema";
+// import logger from "../utils/middleware/winstonLogger";
 
 interface Options {
   source: string;
@@ -52,6 +53,6 @@ export const gqlCall = async ({ source, variableValues, userId }: Options) => {
       res: {},
     },
   });
-  // console.log("gqlCall response: ", response);
+  // logger.debug("gqlCall response: ", response);
   return response; // ExecutionResult contains either error OR data
 };

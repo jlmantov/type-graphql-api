@@ -6,7 +6,8 @@ import { revokeRefreshTokens } from "../../../utils/auth";
 import { verifyPwd } from "../../../utils/crypto";
 import HttpError from "../../../utils/httpError";
 import { GraphqlContext } from "../../utils/GraphqlContext";
-import { isAuthGql } from "../../utils/middleware/isAuth";
+import { isAuthGql } from "../../utils/middleware/gqlAuth";
+// import logger from "../../../utils/middleware/winstonLogger";
 
 @Resolver()
 export class UserResolver {
@@ -39,7 +40,7 @@ export class UserResolver {
       where: { email },
     });
     if (!user) {
-      throw new HttpError(204, "BadRequestError", "Not found");
+      throw new HttpError(204, "RequestError", "No Content");
     }
 
     // const validated = await verifyPwd(password, user.password);
@@ -70,7 +71,7 @@ export class UserResolver {
 
     // By adding authentication as middleware, the authentication is performed before the query takes place.
     // since isAuth is going to throw an error if user is missing, we can access user directly from here
-    // console.log(`isAuthenticated: userId ${user!.id} is authenticated!`);
+    // logger.debug(`isAuthenticated: userId ${user!.id} is authenticated!`);
     return `userId ${user!.id} is authenticated!`;
   }
 
@@ -98,13 +99,13 @@ export class UserResolver {
     const userRepo = getConnection().getRepository("User") as Repository<User>;
     const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
     const userConfirmation = await emailRepo.findOne({ where: { uuid } });
-    // console.log("userConfirmation", userConfirmation);
+    // logger.debug("userConfirmation", userConfirmation);
     if (userConfirmation === undefined) {
       return false;
     }
 
     const user = await userRepo.findOne({ where: { email: userConfirmation.email } });
-    // console.log("user", user);
+    // logger.debug("user", user);
     if (!user) {
       return false;
     }

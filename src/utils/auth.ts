@@ -4,6 +4,8 @@ import { getConnection, Repository } from "typeorm";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 import { User } from "../orm/entity/User";
 import HttpError from "./httpError";
+import logger from "./middleware/winstonLogger";
+// import logger from "./middleware/winstonLogger";
 
 export interface JwtAccessPayload {
   bit: string; // userId
@@ -39,7 +41,7 @@ export const createResetPasswordToken = async (user: User) => {
     expiresIn: "5m",
     algorithm: "HS384",
   };
-  // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
+  // logger.debug("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
   return await jwt.sign(resetPayload, process.env.JWT_ACCESS_TOKEN_SECRET!, resetOptions);
 };
 
@@ -55,7 +57,7 @@ export const createAccessToken = async (user: User) => {
     expiresIn: "15m",
     algorithm: "HS384",
   };
-  // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
+  // logger.debug("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
   return await jwt.sign(accessPayload, process.env.JWT_ACCESS_TOKEN_SECRET!, accessOptions);
 };
 
@@ -71,7 +73,7 @@ export const createRefreshToken = async (user: User) => {
     expiresIn: "7d",
     algorithm: "HS384",
   };
-  // console.log("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
+  // logger.debug("jwt.sign("+ JSON.stringify(payload) +", jwtsecretKey, "+ JSON.stringify(options) +")");
   return await jwt.sign(refreshPayload, process.env.JWT_REFRESH_TOKEN_SECRET!, refreshOptions);
 };
 
@@ -94,7 +96,7 @@ export const sendRefreshToken = (res: Response, refreshToken: string) => {
  */
 export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) => {
   // Create a POST request with a cookie attached - in Postman (or similar)
-  // console.log("refreshtoken req.cookies: ", req.cookies);
+  // logger.debug("refreshtoken req.cookies: ", req.cookies);
   // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
   const token = req.cookies.jid;
   if (!token) {
@@ -112,8 +114,9 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     reqUsr.id = parseInt(payload!.kew, 10);
     reqUsr.tokenVersion = payload.tas;
   } catch (error) {
-    // console.error(error.name + ": " + error.message + "!"); // ex.: 'JsonWebTokenError: jwt expired!'
     res.clearCookie("jid");
+    logger.error(error.message, { label: "handleJwtRefreshTokenRequest", error }); // ex.: 'JsonWebTokenError: jwt expired!'
+    // throw new HttpError(400, error.name, error.message);
     return res.status(400).send({ accessToken: "", error: error.message });
   }
 
@@ -122,6 +125,8 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   const user = await userRepo.findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
+    logger.error("System error, user not found!", { label: "handleJwtRefreshTokenRequest" });
+    // throw new HttpError(400, "BadRequestError", "System error, user not found!");
     return res.status(400).send({ accessToken: "", error: "System error!" });
   }
 
@@ -130,6 +135,8 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
     res.clearCookie("jid");
+    logger.error("refreshToken expired, please login again!", {label: "handleJwtRefreshTokenRequest" });
+    // throw new HttpError(400, "BadRequestError", "refreshToken expired, please login again!");
     return res
       .status(400)
       .send({ accessToken: "", error: "refreshToken expired, please login again!" });
@@ -153,11 +160,19 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
       throw new HttpError(401, "JsonWebTokenError", "Invalid token");
     }
     if (!(jwtPayload.bit || jwtPayload.plf)) {
-      throw new HttpError(401, "JsonWebTokenError", "Invalid token");
+      // one must be available (not both)
+      throw new HttpError(401, "JsonWebTokenError", "Invalid token", new Error(JSON.stringify(jwtPayload)));
     }
     return jwtPayload;
   } catch (error) {
-    throw error; // forward error handling to caller
+    if (error instanceof HttpError) {
+      throw error; // declared above
+    } else {
+      if ((error.name = "TokenExpiredError")) {
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+      }
+      throw new HttpError(401, "UnauthorizedError", "Expired or invalid input", error); // something caused by 'verify(...)'
+    }
   }
 };
 
@@ -179,6 +194,6 @@ export const revokeRefreshTokens = async (ctx: GraphqlContext): Promise<boolean>
   ctx.user!.tokenVersion += 1;
   ctx.res.clearCookie("jid");
 
-  // console.log(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
+  // logger.debug(`revokeRefreshTokens - tokens revoked by incrementing tokenVersion.`);
   return true;
 };

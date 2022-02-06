@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import HttpError from "./httpError";
 // Maybe tis will cange in the future - for now, argon2 is isolated in this file.
 
 /**
@@ -41,7 +42,7 @@ export const hash = async (pwd: string): Promise<string> => {
 
     return respValues[4] + "$" + respValues[5]; // base64 encoded salt + base64 encoded passwordhash
   } catch (error) {
-    return error;
+    throw new HttpError(500, "EncryptionError", "Password encryption failed", error); // anonymous error, user might be looking for a vulnerabilities
   }
 };
 
@@ -60,8 +61,7 @@ export const verifyPwd = async (pwd: string, hashedPwd: string): Promise<boolean
       return false; // password did not match
     }
   } catch (error) {
-    console.error(error); // internal failure
-    throw error;
+      throw new HttpError(400, "BadRequestError", "Invalid password", error); // anonymous error, user might be looking for a vulnerabilities
   }
 };
 

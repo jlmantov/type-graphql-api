@@ -56,8 +56,11 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
       tokenVersion: payload.rnl,
     };
   } catch (error) {
-    // console.log("Invalid token payload: ", error); // log token verification error
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    if (error instanceof HttpError) {
+      throw error; // error already handled
+    } else {
+      throw new HttpError(400, "BadRequestError", "Expired or invalid input", error); // anonymous error, user might be looking for a vulnerabilities
+    }
   }
 
   if (!reqUsr.id || reqUsr.tokenVersion < 0) {
@@ -75,7 +78,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
 
   const now = Math.floor(Date.now() / 1000);
   // const createdAt = new Date(userEmail.createdAt).getTime() / 1000;
-  // console.log("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 5m = 5*60s = 300s <=> exp = iat + 300
+  // logger.debug("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 5m = 5*60s = 300s <=> exp = iat + 300
   if (payload.exp < now) {
     // Token expired!
     throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
@@ -84,7 +87,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   const pwd = req.body.pwd;
   const hashedPwd = await hash(pwd);
 
-  // console.log("User.findOne: ", { id: pUserId, email: userEmail.email, tokenVersion: pTokenVersion, confirmed: true });
+  // logger.debug("User.findOne: ", { id: pUserId, email: userEmail.email, tokenVersion: pTokenVersion, confirmed: true });
   const userRepo = getConnection().getRepository("User") as Repository<User>;
   const user = await userRepo.findOne({
     where: {
@@ -100,7 +103,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
 
   const updRes = await userRepo.update(user.id, { password: hashedPwd });
   if (updRes.affected === 1) {
-    // console.log("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
+    // logger.debug("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
     await emailRepo.delete(userEmail.id); // only cleanup if password was actually enabled
   }
   return !!updRes.affected; // true if more than zero rows were affected by the update

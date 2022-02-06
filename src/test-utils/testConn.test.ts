@@ -1,6 +1,7 @@
 import faker from "faker";
 import { Connection } from "typeorm";
 import { registerMutation } from "../graphql/modules/user/register/Register.test";
+import logger from "../utils/middleware/winstonLogger";
 import { gqlCall } from "./gqlCall";
 import testConn from "./testConn";
 
@@ -15,7 +16,8 @@ describe("testConn test-util", () => {
   let conn: Connection;
 
   beforeAll(async () => {
-    // make sure data is present in DB before testConn.clear() is called
+    logger.info(" --- testConn.test.ts");
+    // provide test data in DB before testConn.clear() is called
     const fakeUser = {
       firstname: faker.name.firstName(),
       lastname: faker.name.lastName(),
@@ -30,20 +32,20 @@ describe("testConn test-util", () => {
 
   afterEach(async () => {
     if (conn && conn.isConnected) {
-      // console.log("closing DB connection");
+      // logger.debug("closing DB connection");
       await testConn.close();
     }
-    // console.log("isConnected:", !!(conn && conn.isConnected));
+    // logger.debug("isConnected:", !!(conn && conn.isConnected));
   });
 
   /**
    *
    */
   test("testConn.create - success", async () => {
-    // console.log("before create - conn: ", conn?.driver?.options);
+    // logger.debug("before create - conn: ", conn?.driver?.options);
     expect(conn).toBeUndefined();
     conn = await testConn.create();
-    // console.log("after create - conn: ", conn?.driver?.options);
+    // logger.debug("after create - conn: ", conn?.driver?.options);
     expect(conn).toBeDefined();
     expect(conn.isConnected).toBe(true);
 
@@ -51,7 +53,7 @@ describe("testConn test-util", () => {
     const entityPromises = entities.map(async (entity) => {
       const repo = conn.getRepository(entity.name);
       const response = await repo.findOneOrFail();
-      // console.log("entity:", response);
+      // logger.debug("entity:", response);
       expect(response).toBeDefined();
       return response;
     });
@@ -67,7 +69,7 @@ describe("testConn test-util", () => {
     if (conn === undefined || !conn.isConnected) {
       conn = await testConn.create();
     }
-    // console.log("before close - isConnected: ", conn.isConnected, " conn: ", conn?.driver?.options);
+    // logger.debug("before close - isConnected: ", conn.isConnected, " conn: ", conn?.driver?.options);
     expect(conn).toBeDefined();
     expect(conn.isConnected).toBe(true);
 
@@ -82,7 +84,7 @@ describe("testConn test-util", () => {
     if (conn === undefined || !conn.isConnected) {
       conn = await testConn.create();
     }
-    // console.log("before close - isConnected: ", conn.isConnected, " conn: ", conn?.driver?.options);
+    // logger.debug("before close - isConnected: ", conn.isConnected, " conn: ", conn?.driver?.options);
     expect(conn).toBeDefined();
     expect(conn.isConnected).toBe(true);
 
@@ -110,7 +112,7 @@ describe("testConn test-util", () => {
       // const qRes = await repo.clear();
       // https://dev.mysql.com/doc/internals/en/generic-response-packets.html
       const qRes = await repo.query(`SELECT count(*) as count FROM ${entity.tableName}`);
-      // console.log(`Before clear: ${entity.name} - ${qRes[0].count} row(s)`);
+      // logger.debug(`Before clear: ${entity.name} - ${qRes[0].count} row(s)`);
       entitiesMap.set(entity.name, {
         entityName: entity.name,
         rowsBefore: Number(qRes[0].count),
@@ -118,20 +120,20 @@ describe("testConn test-util", () => {
         cleared: -1,
         rowsAfter: -1,
       });
-      // console.log(`Entity mapped: ${JSON.stringify(entitiesMap.get(entity.name), null, 2)}`);
+      // logger.debug(`Entity mapped: ${JSON.stringify(entitiesMap.get(entity.name), null, 2)}`);
     }
 
     // await testConn.clear();
     const clearResult = await testConn.clear();
     expect(clearResult.length).toBeGreaterThan(0);
 
-    // console.log("clearResult:", clearResult);
+    // logger.debug("clearResult:", clearResult);
     for (const res of clearResult) {
       entitiesMap.set(res.entityName, {
         ...entitiesMap.get(res.entityName),
         cleared: Number(res.result?.affectedRows),
       });
-      // console.log(`Entity cleared: ${JSON.stringify(entitiesMap.get(res.entityName), null, 2)}`);
+      // logger.debug(`Entity cleared: ${JSON.stringify(entitiesMap.get(res.entityName), null, 2)}`);
     }
 
     for (const entity of entities) {
@@ -139,20 +141,20 @@ describe("testConn test-util", () => {
       // const qRes = await repo.clear();
       // https://dev.mysql.com/doc/internals/en/generic-response-packets.html
       const qRes = await repo.query(`SELECT count(*) as count FROM ${entity.tableName}`);
-      // console.log(`Before clear: ${entity.name} - ${qRes[0].count} row(s)`);
+      // logger.debug(`Before clear: ${entity.name} - ${qRes[0].count} row(s)`);
       entitiesMap.set(entity.name, {
         ...entitiesMap.get(entity.name),
         rowsAfter: Number(qRes[0].count),
       });
-      // console.log(`Entity after: ${JSON.stringify(entitiesMap.get(entity.name), null, 2)}`);
+      // logger.debug(`Entity after: ${JSON.stringify(entitiesMap.get(entity.name), null, 2)}`);
     }
 
-    // console.log(`Entity keys:`, entitiesMap.keys());
+    // logger.debug(`Entity keys:`, entitiesMap.keys());
     for (const key of entitiesMap.keys()) {
       const entity = entitiesMap.get(key);
       expect(entity.rowsBefore).toEqual(entity.cleared);
       expect(entity.rowsAfter).toBe(0);
-      // console.log("Entity cleared succesfully: ", entity.entityName);
+      // logger.debug("Entity cleared succesfully: ", entity.entityName);
     }
 
     // await conn.close(); // 'expect' ends the test case, so this line might be unreachable

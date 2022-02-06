@@ -5,6 +5,7 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import app from "./app";
 import { createSchema } from "./graphql/utils/createSchema";
+import logger from "./utils/middleware/winstonLogger";
 
 // lambda function calling itself immediately (closure) - bootstrap - https://typegraphql.com/docs/bootstrap.html#create-an-http-graphql-endpoint
 (async () => {
@@ -13,7 +14,7 @@ import { createSchema } from "./graphql/utils/createSchema";
   const envfile = __dirname + "/../.env." + (process.env.NODE_ENV?.trim() || "development");
   const envConf = dotenv.config({ path: envfile });
   if (envConf?.parsed?.DOMAIN === "localhost") {
-    console.log("Configuration environment:", envConf?.parsed?.NODE_ENV);
+    logger.debug("Configuration environment: "+ envConf?.parsed?.NODE_ENV);
   }
 
   await createConnection(); // create database connection
@@ -37,7 +38,7 @@ import { createSchema } from "./graphql/utils/createSchema";
 
   const port = process.env.PORT!;
   app.listen(port, () => {
-    console.log(`Express server started at port ${port}`);
+    logger.info(`Express server started at port ${port}`);
   });
 })();
 

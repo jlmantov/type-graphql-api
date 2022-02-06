@@ -24,29 +24,30 @@ export class RegisterResolver {
       throw new HttpError(400, "BadRequestError", "User already exist"); // avoid duplicates
     }
 
-    // encrypt the password (keep it a secret)
-    const hashedPassword = await hash(password);
-    const user = await userRepo
-      .create({
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-      })
-      .save();
-
-    if (!user) {
-      throw new HttpError(500, "InternalServerError", "Unable to create user"); // some unhandled error - net, connection, DB, disc whatever ...
-    }
-
     try {
-      // make user confirm email before login is enabled
-      // console.log("send user confirmation email");
-      await sendUserEmail(email, CONFIRMUSER);
-    } catch (error) {
-      throw new HttpError(500, "InternalServerError", error.message); // some unhandled error - net, connection, DB, disc whatever ...
-    }
+      // encrypt the password (keep it a secret)
+      const hashedPassword = await hash(password);
+      const user = await userRepo
+        .create({
+          firstName,
+          lastName,
+          email,
+          password: hashedPassword,
+        })
+        .save();
 
-    return user;
+      if (!user) {
+        throw new HttpError(500, "InternalServerError", "Unable to create user"); // some unhandled error - net, connection, DB, disc whatever ...
+      }
+
+      // make user confirm email before login is enabled
+      await sendUserEmail(email, CONFIRMUSER);
+      return user;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error; // error already handled
+      }
+      throw new HttpError(500, "InternalServerError", error.message, error); // some unhandled error - net, connection, DB, disc whatever ...
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getConnection, Repository } from "typeorm";
 import { User } from "../../orm/entity/User";
+import logger from "../../utils/middleware/winstonLogger";
 import { confirmUserEmail, resetPasswordForm } from "../../utils/sendEmail";
 import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
 
@@ -33,6 +34,7 @@ export const newPasswordForm_get = async (req: Request, res: Response) => {
   try {
     resetPasswordForm(req, res);
   } catch (error) {
+    logger.error(error.message, { label: "newPasswordForm_get", error });
     res.status(400).send(error.name + ": " + error.message);
   }
 };
@@ -55,6 +57,7 @@ export const verifyPassword_post = async (req: Request, res: Response) => {
     res.status(200).redirect(`http://${process.env.DOMAIN}:${process.env.PORT}/`);
   } catch (error) {
     res.clearCookie("roj");
+    logger.error(error.message, { label: "verifyPassword_post", error });
     res.status(400).send(error.name + ": " + error.message);
   }
 };

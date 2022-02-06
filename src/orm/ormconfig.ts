@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { ConnectionOptions } from "typeorm";
+import logger from "../utils/middleware/winstonLogger";
 
 /**
  * whitespace in NODE_ENV - package.json example:
@@ -9,10 +10,10 @@ import { ConnectionOptions } from "typeorm";
  */
 const configName = process.env.NODE_ENV?.trim() || "development";
 const envfile = __dirname + "/../../.env." + configName;
-console.log("configName: '" + configName + "', envfile: '" + envfile + "'");
+// logger.debug("configName: '" + configName + "', envfile: '" + envfile + "'");
 const envConf = dotenv.config({ path: envfile });
 if (envConf?.parsed?.DOMAIN === "localhost") {
-  console.log("Configuration environment:", envConf?.parsed?.NODE_ENV);
+  logger.debug("Configuration environment: "+ envConf?.parsed?.NODE_ENV);
 }
 
 const ORMConfig: ConnectionOptions = {
@@ -37,6 +38,6 @@ const ORMConfig: ConnectionOptions = {
     subscribersDir: String(process.env.TYPEORM_SUBSCRIBERS_DIR),
   },
 };
-(configName !== "prod") && console.log("ORMConfig", ORMConfig);
+(configName !== "prod") && logger.debug("ORMConfig", ORMConfig);
 
 export = ORMConfig;

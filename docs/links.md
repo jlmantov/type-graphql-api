@@ -42,6 +42,10 @@ I have also thought about [how to organize and store accounts, emails and person
 - [graphql-tag](https://www.npmjs.com/package/graphql-tag)
 
 - [Nodemailer](https://nodemailer.com/about/)
+- [winston logger (github)](https://github.com/winstonjs/winston)
+- [Setting up a custom logger for node express typescript server](https://sujaykundu.com/blog/setting-up-custom-logger-for-node-express-typescript-server/)
+- [Better logs for ExpressJS using Winston and Morgan with Typescript](https://levelup.gitconnected.com/better-logs-for-expressjs-using-winston-and-morgan-with-typescript-1c31c1ab9342)
+- [Ultimate Guide to Logging](https://www.loggly.com/ultimate-guide/node-logging-basics/)
 
 ### Typescript
 
@@ -55,6 +59,7 @@ I have also thought about [how to organize and store accounts, emails and person
 - []()
 
 ### Express
+
 - [Express](https://expressjs.com/)
 - [Beginner's guide to building a server using Express as a Node.js framework](https://dev.to/lisahjung/beginner-s-guide-to-building-a-server-with-express-js-29c3)
 - [Using middleware](https://expressjs.com/en/guide/using-middleware.html)
@@ -64,7 +69,6 @@ I have also thought about [how to organize and store accounts, emails and person
 - [Express cors middleware](https://expressjs.com/en/resources/cors.html)
 - [MDN Express Tutorial Part 4: Routes and controllers](https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/routes)
 - [wanago.io: TypeScript Express tutorial #3. Error handling and validating incoming data](https://wanago.io/2018/12/17/typescript-express-error-handling-validation/)
-
 
 ### Test
 

@@ -9,6 +9,7 @@ import { UserEmail } from "../../orm/entity/UserEmail";
 import { gqlCall } from "../../test-utils/gqlCall";
 import testConn from "../../test-utils/testConn";
 import { createAccessToken } from "../../utils/auth";
+import logger from "../../utils/middleware/winstonLogger";
 
 /**
  * inpired by Sam Meech-Ward - Testing Node Server with Jest and Supertest
@@ -34,7 +35,7 @@ describe("User", () => {
     conn = await testConn.create();
     userRepo = conn.getRepository("User");
     emailRepo = conn.getRepository("UserEmail");
-    // console.log("user.test.ts DB: " + conn.driver.database);
+    logger.info(" --- user.test.ts DB: " + conn.driver.database);
 
     const fakeUser = {
       firstname: faker.name.firstName(),
@@ -89,6 +90,7 @@ describe("User", () => {
         .get("/user")
         .set("Authorization", "bearer " + accessToken)
         .send(); // no authentication header
+
       expect(res.statusCode).toEqual(200);
       // response:  {
       //   users: [
@@ -109,7 +111,7 @@ describe("User", () => {
   }); // GET /user/
 
   /**
-   * src/graphql/modules/user/REgister.test.ts:
+   * src/graphql/modules/user/Register.test.ts:
    * 1. When user is registered, an email is sent
    * 2. If provided email is already in use, registration is rejected
    * Test suite below:
@@ -169,7 +171,7 @@ describe("User", () => {
         .get("/user/confirm/" + userEmail!.uuid)
         .send();
 
-      // console.log("use email-link second time:", JSON.stringify(res, null, 2));
+      // logger.debug("use email-link second time:", JSON.stringify(res, null, 2));
       expect(res.statusCode).toEqual(400);
       expect(res.text).toEqual("Expired or unknown id, please register again");
     }); // test: fail on attempt to use email-link second time

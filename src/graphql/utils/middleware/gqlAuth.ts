@@ -39,13 +39,17 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
         tokenVersion: payload.ogj,
       };
     } catch (error) {
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
+      if (error instanceof HttpError) {
+        throw error; // error alread handled
+      } else {
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+      }
     }
 
     const userRepo = getConnection().getRepository("User") as Repository<User>;
     const user = await userRepo.findOne(context.user.id);
     if (!user) {
-      // did network, DB or something else fail?
+      // did network, DB or something else fail? - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
       throw new HttpError(500, "InternalServerError", "User validation failed");
     }
     if (user.tokenVersion !== context.user.tokenVersion) {
@@ -53,7 +57,7 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
     }
   } catch (error) {
-    // console.log("isAuth: " + error.name + " - " + error.message);
+    // logger.debug("isAuth: " + error.name + " - " + error.message);
     if (error instanceof HttpError) {
       throw error; // error already handled
     }
@@ -61,12 +65,12 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(400, error.name, error.message);
+        throw new HttpError(400, error.name, error.message, error);
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
-        throw new HttpError(403, error.name, error.message);
+        throw new HttpError(403, error.name, error.message, error);
       default:
-        throw new HttpError(500, error.name, error.message);
+        throw new HttpError(500, error.name, error.message, error);
     }
   }
 

@@ -3,6 +3,7 @@ import { Connection, Repository } from "typeorm";
 import { User } from "../../../../orm/entity/User";
 import { gqlCall } from "../../../../test-utils/gqlCall";
 import testConn from "../../../../test-utils/testConn";
+import logger from "../../../../utils/middleware/winstonLogger";
 
 /**
  * the graphql schema is called directly, using the graphql(...) function.
@@ -35,7 +36,7 @@ describe("Register resolver", () => {
   beforeAll(async () => {
     conn = await testConn.create();
     userRepo = conn.getRepository("User");
-    // console.log("Register.test.ts DB: " + conn.driver.database);
+    logger.info(" --- Register.test.ts DB: " + conn.driver.database);
     fakeUser = {
       firstname: faker.name.firstName(),
       lastname: faker.name.lastName(),
@@ -45,7 +46,7 @@ describe("Register resolver", () => {
   });
 
   afterAll(async () => {
-    conn.isConnected && await conn.close();
+    conn.isConnected && (await conn.close());
   });
 
   beforeEach(async () => {
@@ -56,19 +57,13 @@ describe("Register resolver", () => {
    * Success scenario: Create user
    */
   test("Create user - success", async () => {
-    // console.log("fakeUser: ", fakeUser);
+    // logger.debug("fakeUser: ", fakeUser);
     expect(fakeUser.email.length).toBeGreaterThan(0);
 
     const response = await gqlCall({
       source: registerMutation,
       variableValues: fakeUser,
     });
-
-    // const entities: string[] = [];
-    // conn.entityMetadatas.forEach((entity) => {
-    //   entities.push(entity.targetName);
-    // });
-    // console.log("Create user (success) - Entities: " + JSON.stringify(entities, null, 2));
 
     expect(response.data).toBeDefined();
     expect(response).toMatchObject({
@@ -84,7 +79,7 @@ describe("Register resolver", () => {
     });
 
     const user = await userRepo.findOne({ where: { email: fakeUser.email } });
-    // console.log("Create user (success) - userRepo.findOne: " + JSON.stringify(user, null, 2));
+    // logger.debug("userRepo.findOne: " + JSON.stringify(user, null, 2));
     expect(user).toBeDefined();
     expect(user?.firstName).toEqual(fakeUser.firstname);
     expect(user?.confirmed).toBeFalsy();
@@ -100,7 +95,7 @@ describe("Register resolver", () => {
       source: registerMutation,
       variableValues: fakeUser, // attempt to register fakeUser second time
     });
-    // console.log("response: ", response);
+    // logger.debug("response: ", response);
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);
@@ -126,7 +121,7 @@ describe("Register resolver", () => {
       source: registerMutation,
       variableValues: fakeUser,
     });
-    console.log("Error scenario: unable to create user - response: ", response);
+    logger.info("Error scenario: unable to create user - response: ", response);
 
     expect(response.errors).toBeDefined();
   });
