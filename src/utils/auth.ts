@@ -115,7 +115,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     reqUsr.tokenVersion = payload.tas;
   } catch (error) {
     res.clearCookie("jid");
-    logger.error(error.message, { label: "handleJwtRefreshTokenRequest", error }); // ex.: 'JsonWebTokenError: jwt expired!'
+    logger.error(error.message, { label: "handleJwtRefreshTokenRequest1", error }); // ex.: 'JsonWebTokenError: jwt expired!'
     // throw new HttpError(400, error.name, error.message);
     return res.status(400).send({ accessToken: "", error: error.message });
   }
@@ -125,7 +125,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
   const user = await userRepo.findOne({ id: reqUsr.id });
   if (!user) {
     // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
-    logger.error("System error, user not found!", { label: "handleJwtRefreshTokenRequest" });
+    logger.error("System error, user not found!", { label: "handleJwtRefreshTokenRequest2" });
     // throw new HttpError(400, "BadRequestError", "System error, user not found!");
     return res.status(400).send({ accessToken: "", error: "System error!" });
   }
@@ -135,7 +135,7 @@ export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) 
     // this is how it is done:
     // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
     res.clearCookie("jid");
-    logger.error("refreshToken expired, please login again!", {label: "handleJwtRefreshTokenRequest" });
+    logger.error("refreshToken expired, please login again!", {label: "handleJwtRefreshTokenRequest3" });
     // throw new HttpError(400, "BadRequestError", "refreshToken expired, please login again!");
     return res
       .status(400)
