@@ -69,9 +69,22 @@ describe("Main routes - Landingpage + Renew Access token", () => {
     }); // test: fail on cookie missing
 
     test("should fail on refreshToken expired!", async () => {
-      // old token - should fail with response message and cookie deleted in response
+      let dbuser = await userRepo.findOne({ id: 1 });
+      if (!dbuser) {
+        dbuser = await userRepo.findOne();
+      }
+      expect(dbuser).toBeDefined();
+      const qRes = await userRepo.query(
+        `UPDATE Users SET id=1, firstName='John', lastName='Doe', email='john.doe@mail.com', ` +
+          `password='Lpm4y8KD5KO1LgvuuSu4fg$fKfwoqPMfxqO1Lb9MEHyWlun3ZysdZf8gN3W1QRnHO4', ` +
+          `confirmed=1, tokenVersion=0 ` +
+          `WHERE id=${dbuser!.id}`
+      );
+      logger.debug(" -- johnDoeUpdate:", qRes);
+      expect(qRes).toBeDefined();
+      // old token (based on 'John Doe' profile above) - userId should fail with response message and cookie deleted in response
       const oldRefreshToken =
-        "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJrZXciOjEsInRhcyI6MCwiaWF0IjoxNjQwNjg4MjYwLCJleHAiOjE2NDEyOTMwNjB9.ZUC-qxsuegFr9XVAkAWQKrdMIF3UasxwoLlur5w-2AdKT2F1UwAQPI-jP6ASMPOr";
+        "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJrZXciOjEsInRhcyI6MCwiaWF0IjoxNjQ0MjM0MTg5LCJleHAiOjE2NDQ4Mzg5ODl9.D2HDa8NYhyg-hpuPyY0f_pcywFTNiX_eZv6yGP95NQfLoLSkhsUEorx0RO8ZBI5k";
 
       const res = await request(app)
         .post("/renew_accesstoken")
