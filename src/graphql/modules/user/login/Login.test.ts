@@ -76,7 +76,7 @@ describe("Login resolver", () => {
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);
     expect(response.errors![0].message).toEqual(
-      "Email needs to be confirmed in order to enable login!"
+      "Email needs to be confirmed in order to enable login"
     );
   });
 
@@ -120,7 +120,7 @@ describe("Login resolver", () => {
       source: loginQuery,
       variableValues: loginNotWorking,
     });
-    // logger.debug("Login failed response: ", JSON.stringify(response, null, 2));
+    // logger.debug("Login failed response: ", response.errors);
 
     expect(response.errors).toBeDefined();
     expect(response.errors!.length).toBe(1);

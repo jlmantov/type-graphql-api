@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser";
 import express from "express";
-import { handleJwtRefreshTokenRequest } from "../utils/auth";
+import { renew_accesstoken_post } from "../utils/auth";
 import HttpError from "../utils/httpError";
 import userRouter from "./user";
 
@@ -22,9 +22,7 @@ router.get("/asdf", (_req, _res) => {
 /**
  * POST "/renew_accesstoken" - requires cookie with refreshToken.
  */
-router.post("/renew_accesstoken", async (req, res) => {
-  handleJwtRefreshTokenRequest(req, res);
-});
+router.post("/renew_accesstoken", renew_accesstoken_post);
 
 /**
  * users

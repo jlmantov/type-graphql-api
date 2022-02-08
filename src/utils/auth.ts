@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import jwt, { SignOptions, verify } from "jsonwebtoken";
+import jwt, { JsonWebTokenError, SignOptions, verify } from "jsonwebtoken";
 import { getConnection, Repository } from "typeorm";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 import { User } from "../orm/entity/User";
 import HttpError from "./httpError";
-import logger from "./middleware/winstonLogger";
-// import logger from "./middleware/winstonLogger";
 
 export interface JwtAccessPayload {
   bit: string; // userId
@@ -94,59 +92,56 @@ export const sendRefreshToken = (res: Response, refreshToken: string) => {
  * @param req express request
  * @param res express response
  */
-export const handleJwtRefreshTokenRequest = async (req: Request, res: Response) => {
-  // Create a POST request with a cookie attached - in Postman (or similar)
-  // logger.debug("refreshtoken req.cookies: ", req.cookies);
-  // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
-  const token = req.cookies.jid;
-  if (!token) {
-    res.clearCookie("jid");
-    return res.status(400).send({ accessToken: "", error: "Access denied!" });
-  }
-
-  let payload: JwtRefreshPayload | null = null;
-  const reqUsr = {
-    id: 0,
-    tokenVersion: -1,
-  };
+export const renew_accesstoken_post = async (req: Request, res: Response) => {
   try {
-    payload = verify(token, process.env.JWT_REFRESH_TOKEN_SECRET!) as JwtRefreshPayload;
-    reqUsr.id = parseInt(payload!.kew, 10);
-    reqUsr.tokenVersion = payload.tas;
+    // Create a POST request with a cookie attached - in Postman (or similar)
+    // logger.debug("refreshtoken req.cookies: ", req.cookies);
+    // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
+    const token = req.cookies.jid;
+    if (!token) {
+      throw new HttpError(400, "BadRequestError", "Access denied");
+    }
+
+    let payload: JwtRefreshPayload | null = null;
+    const reqUsr = { id: 0, tokenVersion: -1 };
+    try {
+      payload = verify(token, process.env.JWT_REFRESH_TOKEN_SECRET!) as JwtRefreshPayload;
+      reqUsr.id = parseInt(payload!.kew, 10);
+      reqUsr.tokenVersion = payload.tas;
+    } catch (error) {
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+    }
+
+    //  token is valid and we can return an accessToken
+    const userRepo = getConnection().getRepository("User") as Repository<User>;
+    const user = await userRepo.findOne({ id: reqUsr.id });
+    if (!user) {
+      // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
+      throw new HttpError(400, "BadRequestError", "Unable to validate user");
+    }
+
+    if (user.tokenVersion !== reqUsr.tokenVersion) {
+      // If user forgets/change password or decides to invalidate existing sessions, this is how it is done:
+      // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
+    }
+
+    // update refreshToken as well
+    const refreshToken = await createRefreshToken(user);
+    sendRefreshToken(res, refreshToken);
+
+    res.status(200).send({ accessToken: await createAccessToken(user) });
   } catch (error) {
+    // logger.error(error.message, { label: "renew_accesstoken_post ERROR:", error });
     res.clearCookie("jid");
-    logger.error(error.message, { label: "handleJwtRefreshTokenRequest1", error }); // ex.: 'JsonWebTokenError: jwt expired!'
-    // throw new HttpError(400, error.name, error.message);
-    return res.status(400).send({ accessToken: "", error: error.message });
+    let httpErr = undefined; // HttpError takes care of logging
+    if (error instanceof HttpError) {
+      httpErr = error as HttpError; // declared above
+    } else {
+      httpErr = new HttpError(401, "AuthorizationError", "Expired or invalid input", error); // something caused by 'verify(...)'
+    }
+    res.status(httpErr.status).send({ name: httpErr.name, message: httpErr.message });
   }
-
-  //  token is valid and we can return an accessToken
-  const userRepo = getConnection().getRepository("User") as Repository<User>;
-  const user = await userRepo.findOne({ id: reqUsr.id });
-  if (!user) {
-    // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
-    logger.error("System error, user not found!", { label: "handleJwtRefreshTokenRequest2" });
-    // throw new HttpError(400, "BadRequestError", "System error, user not found!");
-    return res.status(400).send({ accessToken: "", error: "System error!" });
-  }
-
-  if (user.tokenVersion !== reqUsr.tokenVersion) {
-    // If user has forgotten password/changed password or for some reason decides to invalidate existing sessions,
-    // this is how it is done:
-    // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
-    res.clearCookie("jid");
-    logger.error("refreshToken expired, please login again!", {label: "handleJwtRefreshTokenRequest3" });
-    // throw new HttpError(400, "BadRequestError", "refreshToken expired, please login again!");
-    return res
-      .status(400)
-      .send({ accessToken: "", error: "refreshToken expired, please login again!" });
-  }
-
-  // update refreshToken as well
-  const refreshToken = await createRefreshToken(user);
-  sendRefreshToken(res, refreshToken);
-
-  return res.status(200).send({ accessToken: await createAccessToken(user) });
 };
 
 /**
@@ -157,21 +152,30 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
   try {
     const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
     if (!jwtPayload) {
-      throw new HttpError(401, "JsonWebTokenError", "Invalid token");
+      throw new HttpError(
+        401,
+        "AuthorizationError",
+        "Expired or invalid input",
+        new JsonWebTokenError("No Payload ?!")
+      );
     }
     if (!(jwtPayload.bit || jwtPayload.plf)) {
-      // one must be available (not both)
-      throw new HttpError(401, "JsonWebTokenError", "Invalid token", new Error(JSON.stringify(jwtPayload)));
+      throw new HttpError(
+        401,
+        "AuthorizationError", // one must be available (not both)
+        "Expired or invalid input",
+        new JsonWebTokenError(JSON.stringify(jwtPayload))
+      );
     }
     return jwtPayload;
   } catch (error) {
     if (error instanceof HttpError) {
       throw error; // declared above
     } else {
-      if ((error.name = "TokenExpiredError")) {
-        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+      if (error.message.toLowerCase().indexOf("invalid") > -1) {
+        throw new HttpError(401, "AuthorizationError", "Expired or invalid input", error); // something caused by 'verify(...)'
       }
-      throw new HttpError(401, "UnauthorizedError", "Expired or invalid input", error); // something caused by 'verify(...)'
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
     }
   }
 };

@@ -63,9 +63,14 @@ describe("Main routes - Landingpage + Renew Access token", () => {
   describe("POST /renew_accesstoken - requires cookie with refreshToken", () => {
     test("should fail on cookie missing", async () => {
       const res = await request(app).post("/renew_accesstoken").send(); // no cookie
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("Access denied!");
+      // logger.debug(" -- /renew_accesstoken --> cookie missing", { status: res.status, body: res.body });
+
+      expect(res.status).toEqual(400);
+      expect(res).toHaveProperty("body");
+      expect(res.body).toHaveProperty("name");
+      expect(res.body).toHaveProperty("message");
+      expect(res.body.name).toEqual("BadRequestError");
+      expect(res.body.message).toEqual("Access denied");
     }); // test: fail on cookie missing
 
     test("should fail on refreshToken expired!", async () => {
@@ -81,6 +86,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
           `WHERE id=${dbuser!.id}`
       );
       logger.debug(" -- johnDoeUpdate:", qRes);
+
       expect(qRes).toBeDefined();
       // old token (based on 'John Doe' profile above) - userId should fail with response message and cookie deleted in response
       const oldRefreshToken =
@@ -90,10 +96,15 @@ describe("Main routes - Landingpage + Renew Access token", () => {
         .post("/renew_accesstoken")
         .set("Cookie", `jid=${oldRefreshToken}`)
         .send(); // cookie is required, nothing else
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("jwt expired");
-    }); // test: fail on refreshToken expired
+      // logger.debug(" -- /renew_accesstoken --> expired refreshToken", { status: res.status, body: res.body });
+
+      expect(res.status).toEqual(403);
+      expect(res).toHaveProperty("body");
+      expect(res.body).toHaveProperty("name");
+      expect(res.body).toHaveProperty("message");
+      expect(res.body.name).toEqual("AuthorizationError");
+      expect(res.body.message).toEqual("Access expired, please login again");
+    }); // test: should fail on refreshToken expired!
 
     test("should succeed on valid payload in cookie", async () => {
       // 1. create  refreshToken
@@ -113,23 +124,27 @@ describe("Main routes - Landingpage + Renew Access token", () => {
     }); // test: succeed on valid payload
 
     test("should fail on invalid payload in cookie", async () => {
-      // 1. create an invalid refreshToken - use valid userId + invalid tokenVersion
+      // 1. create a refreshToken - use valid userId + invalid tokenVersion
       expect(user).toBeDefined();
+      const refreshToken = await createRefreshToken(user);
 
       // invalidate tokenVersion in payload by incrementing tokenVersion in DB
       const result = await userRepo.increment({ id: user.id }, "tokenVersion", 1);
       expect(result.affected).toBe(1);
 
-      const refreshToken = await createRefreshToken(user);
-      // 2. add token to request in a cookie
+      // 2. add (outdated) token to request in a cookie
       const res = await request(app)
         .post("/renew_accesstoken")
         .set("Cookie", `jid=${refreshToken}`)
         .send();
-      // 3. validate error response
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toEqual("refreshToken expired, please login again!");
+      // logger.debug(" -- /renew_accesstoken --> invalid payload in cookie", { status: res.status, body: res.body });
+
+      expect(res.status).toEqual(403);
+      expect(res).toHaveProperty("body");
+      expect(res.body).toHaveProperty("name");
+      expect(res.body).toHaveProperty("message");
+      expect(res.body.name).toEqual("AuthorizationError");
+      expect(res.body.message).toEqual("Access expired, please login again");
     }); // test: fail on invalid payload
   }); // POST /renew_accesstoken
 });

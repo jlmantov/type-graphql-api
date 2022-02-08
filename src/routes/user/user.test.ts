@@ -64,7 +64,7 @@ describe("User", () => {
       const res = await request(app).get("/user").send(); // no authentication header
 
       expect(res.statusCode).toEqual(401);
-      expect(res.text).toEqual("Not authenticated");
+      expect(res.text).toEqual("Expired or invalid input");
     }); // test: fail on missing authentication header
 
     test("should fail on authentication header with expired accessToken", async () => {

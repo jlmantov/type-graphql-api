@@ -18,7 +18,7 @@ describe("error", () => {
     testRouter.get("/", (_req, res) => res.status(200).send("OK"));
     testRouter.get("/test/:statuscode", (req, res) => {
       const _statuscode = Number(req.params.statuscode ?? 500);
-      const msg = `TEST Error Message - status ${_statuscode}`;
+      const msg = `TEST pass-through Error Message - status ${_statuscode}`;
       if (_statuscode === 200) {
         res.status(_statuscode).send(msg);
       } else {
@@ -64,7 +64,7 @@ describe("error", () => {
       // );
 
       expect(res.statusCode).toEqual(400);
-      expect(res.text).toEqual("Expired or invalid input");
+      expect(res.text).toEqual("TEST pass-through Error Message - status 400");
     }); // Invalid input (authentication header)
 
     test("Unhandled request - 414 URI Too Long", async () => {
@@ -96,7 +96,7 @@ describe("error", () => {
       // );
 
       expect(res.statusCode).toEqual(401);
-      expect(res.text).toEqual("Not authenticated");
+      expect(res.text).toEqual("Expired or invalid input");
     }); // No authentication header
   }); // Status 401: Not authenticated
 

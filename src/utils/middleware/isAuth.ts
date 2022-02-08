@@ -18,7 +18,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
     if (!authorization) {
       // if the user didn't add the 'authorization' header, we know they're not authenticated
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
-      throw new HttpError(401, "AuthorizationError", "Not authenticated"); // anonymous error, user might be looking for a vulnerabilities
+      throw new HttpError(401, "AuthorizationError", "Expired or invalid input", new Error("No authorization header")); // anonymous error, user might be looking for a vulnerabilities
     }
     const token = authorization.split(" ")[1];
 
@@ -57,13 +57,13 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(400, error.name, error.message, error);
+        throw new HttpError(400, "BadRequestError", "Expired or invalid input", error);
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
         // throw new HttpException(403, error.name, error.message);
         throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
       default:
-        throw new HttpError(500, error.name, error.message, error);
+        throw new HttpError(500, "InternalServerError", "Something went wrong", error);
     }
   }
   next();

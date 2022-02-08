@@ -65,12 +65,12 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(400, error.name, error.message, error);
+        throw new HttpError(400, "BadRequestError", "Expired or invalid input", error);
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
-        throw new HttpError(403, error.name, error.message, error);
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
       default:
-        throw new HttpError(500, error.name, error.message, error);
+        throw new HttpError(500, "InternalServerError", "Something went wrong", error);
     }
   }
 
