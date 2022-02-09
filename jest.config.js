@@ -18,6 +18,7 @@ module.exports = {
     // "testConn.test.[jt]s",
     // "gqlCall.test.[jt]s",
     // "auth.test.[jt]s",
+    // "resetPasswordForm.test.[jt]s",
     // "error.test.[jt]s",
     // "routes.test.[jt]s",
     // "user.test.[jt]s",
