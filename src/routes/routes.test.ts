@@ -1,4 +1,5 @@
 import faker from "faker";
+import jwt, { SignOptions } from "jsonwebtoken";
 import request from "supertest";
 import { Connection, Repository } from "typeorm";
 import app from "../app";
@@ -146,5 +147,68 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       expect(res.body.name).toEqual("AuthorizationError");
       expect(res.body.message).toEqual("Access expired, please login again");
     }); // test: fail on invalid payload
+
+    // attempt to guess other user's properties (illegal access attempt)
+    describe("Illegal access attempt", () => {
+      test("should fail - payload mismatch", async () => {
+        // 1. create a refreshToken - use valid userId + invalid tokenVersion
+        expect(user).toBeDefined();
+        // logger.debug(" -- TEST - refreshPayload = { kew: 999, tas: 1 }");
+        const refreshPayload = { kew: 999, tas: 1 }; // { kew: user.id, tas: user.tokenVersion }
+        const refreshOptions: SignOptions = {
+          header: { alg: "HS384", typ: "JWT" },
+          expiresIn: "7d",
+          algorithm: "HS384",
+        };
+        const alteredPayloadRefreshToken = jwt.sign(
+          refreshPayload,
+          process.env.JWT_REFRESH_TOKEN_SECRET!,
+          refreshOptions
+        );
+
+        // 2. add (modified) token to request in a cookie
+        const res = await request(app)
+          .post("/renew_accesstoken")
+          .set("Cookie", `jid=${alteredPayloadRefreshToken}`)
+          .send();
+        // logger.debug(" -- /renew_accesstoken --> payload mismatch", { status: res.status, body: res.body });
+
+        expect(res.status).toEqual(400);
+        expect(res).toHaveProperty("body");
+        expect(res.body).toHaveProperty("name");
+        expect(res.body).toHaveProperty("message");
+        expect(res.body.name).toEqual("BadRequestError");
+        expect(res.body.message).toEqual("Unable to validate user");
+      }); // test: should fail - payload mismatch
+
+      test("Success - payload match", async () => {
+        // 1. create a refreshToken - use valid userId + invalid tokenVersion
+        expect(user).toBeDefined();
+        // logger.debug(" -- TEST - refreshPayload = { kew: 1, tas: 0 }");
+        const refreshPayload = { kew: 1, tas: 0 }; // { kew: user.id, tas: user.tokenVersion }
+        // Suggestion: add created timestamp or other 'impossible to guess' value to payload
+        const refreshOptions: SignOptions = {
+          header: { alg: "HS384", typ: "JWT" },
+          expiresIn: "7d",
+          algorithm: "HS384",
+        };
+        const alteredPayloadRefreshToken = jwt.sign(
+          refreshPayload,
+          process.env.JWT_REFRESH_TOKEN_SECRET!, // <<<< The secret that needs to be kept secret !!
+          refreshOptions
+        );
+
+        // 2. add (modified) token to request in a cookie
+        const res = await request(app)
+          .post("/renew_accesstoken")
+          .set("Cookie", `jid=${alteredPayloadRefreshToken}`)
+          .send();
+        // logger.debug(" -- /renew_accesstoken --> payload match", { status: res.status, body: res.body });
+
+        expect(res.status).toEqual(200);
+        expect(res).toHaveProperty("body");
+        expect(res.body).toHaveProperty("accessToken"); // new access token provided
+      }); // test: Success - payload match
+    }); //Illegal access attempt
   }); // POST /renew_accesstoken
 });

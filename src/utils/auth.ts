@@ -151,18 +151,10 @@ export const renew_accesstoken_post = async (req: Request, res: Response) => {
 export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload => {
   try {
     const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
-    if (!jwtPayload) {
-      throw new HttpError(
+    if (!(jwtPayload.bit || jwtPayload.plf)) {
+      throw new HttpError( // one must be available (not both)
         401,
         "AuthorizationError",
-        "Expired or invalid input",
-        new JsonWebTokenError("No Payload ?!")
-      );
-    }
-    if (!(jwtPayload.bit || jwtPayload.plf)) {
-      throw new HttpError(
-        401,
-        "AuthorizationError", // one must be available (not both)
         "Expired or invalid input",
         new JsonWebTokenError(JSON.stringify(jwtPayload))
       );

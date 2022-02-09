@@ -17,6 +17,7 @@ module.exports = {
     "/node_modules/",
     // "testConn.test.[jt]s",
     // "gqlCall.test.[jt]s",
+    // "auth.test.[jt]s",
     // "error.test.[jt]s",
     // "routes.test.[jt]s",
     // "user.test.[jt]s",
