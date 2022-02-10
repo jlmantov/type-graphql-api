@@ -153,10 +153,7 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
     const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
     if (!(jwtPayload.bit || jwtPayload.plf)) {
       throw new HttpError( // one must be available (not both)
-        401,
-        "AuthorizationError",
-        "Expired or invalid input",
-        new JsonWebTokenError(JSON.stringify(jwtPayload))
+        401, "AuthorizationError", "Expired or invalid input", new JsonWebTokenError(JSON.stringify(jwtPayload))
       );
     }
     return jwtPayload;

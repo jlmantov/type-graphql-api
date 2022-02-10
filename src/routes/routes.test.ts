@@ -64,7 +64,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
   describe("POST /renew_accesstoken - requires cookie with refreshToken", () => {
     test("should fail on cookie missing", async () => {
       const res = await request(app).post("/renew_accesstoken").send(); // no cookie
-      // logger.debug(" -- /renew_accesstoken --> cookie missing", { status: res.status, body: res.body });
+      logger.silly(" -- /renew_accesstoken --> cookie missing", { status: res.status, body: res.body });
 
       expect(res.status).toEqual(400);
       expect(res).toHaveProperty("body");
@@ -86,7 +86,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
           `confirmed=1, tokenVersion=0 ` +
           `WHERE id=${dbuser!.id}`
       );
-      logger.debug(" -- johnDoeUpdate:", qRes);
+      logger.silly(" -- johnDoeUpdate:", qRes);
 
       expect(qRes).toBeDefined();
       // old token (based on 'John Doe' profile above) - userId should fail with response message and cookie deleted in response
@@ -97,7 +97,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
         .post("/renew_accesstoken")
         .set("Cookie", `jid=${oldRefreshToken}`)
         .send(); // cookie is required, nothing else
-      // logger.debug(" -- /renew_accesstoken --> expired refreshToken", { status: res.status, body: res.body });
+      logger.silly(" -- /renew_accesstoken --> expired refreshToken", { status: res.status, body: res.body });
 
       expect(res.status).toEqual(403);
       expect(res).toHaveProperty("body");
@@ -138,7 +138,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
         .post("/renew_accesstoken")
         .set("Cookie", `jid=${refreshToken}`)
         .send();
-      // logger.debug(" -- /renew_accesstoken --> invalid payload in cookie", { status: res.status, body: res.body });
+      logger.silly(" -- /renew_accesstoken --> invalid payload in cookie", { status: res.status, body: res.body });
 
       expect(res.status).toEqual(403);
       expect(res).toHaveProperty("body");
@@ -153,7 +153,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       test("should fail - payload mismatch", async () => {
         // 1. create a refreshToken - use valid userId + invalid tokenVersion
         expect(user).toBeDefined();
-        // logger.debug(" -- TEST - refreshPayload = { kew: 999, tas: 1 }");
+        logger.silly(" -- TEST - refreshPayload = { kew: 999, tas: 1 }");
         const refreshPayload = { kew: 999, tas: 1 }; // { kew: user.id, tas: user.tokenVersion }
         const refreshOptions: SignOptions = {
           header: { alg: "HS384", typ: "JWT" },
@@ -171,7 +171,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
           .post("/renew_accesstoken")
           .set("Cookie", `jid=${alteredPayloadRefreshToken}`)
           .send();
-        // logger.debug(" -- /renew_accesstoken --> payload mismatch", { status: res.status, body: res.body });
+        logger.silly(" -- /renew_accesstoken --> payload mismatch", { status: res.status, body: res.body });
 
         expect(res.status).toEqual(400);
         expect(res).toHaveProperty("body");
@@ -184,7 +184,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
       test("Success - payload match", async () => {
         // 1. create a refreshToken - use valid userId + invalid tokenVersion
         expect(user).toBeDefined();
-        // logger.debug(" -- TEST - refreshPayload = { kew: 1, tas: 0 }");
+        logger.silly(" -- TEST - refreshPayload = { kew: 1, tas: 0 }");
         const refreshPayload = { kew: 1, tas: 0 }; // { kew: user.id, tas: user.tokenVersion }
         // Suggestion: add created timestamp or other 'impossible to guess' value to payload
         const refreshOptions: SignOptions = {
@@ -203,7 +203,7 @@ describe("Main routes - Landingpage + Renew Access token", () => {
           .post("/renew_accesstoken")
           .set("Cookie", `jid=${alteredPayloadRefreshToken}`)
           .send();
-        // logger.debug(" -- /renew_accesstoken --> payload match", { status: res.status, body: res.body });
+        logger.silly(" -- /renew_accesstoken --> payload match", { status: res.status, body: res.body });
 
         expect(res.status).toEqual(200);
         expect(res).toHaveProperty("body");
