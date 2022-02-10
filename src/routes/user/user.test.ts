@@ -160,7 +160,9 @@ describe("User", () => {
 
       // 6. When user activates email-link, user client is redirected to landing page
       expect(res.statusCode).toEqual(302);
-      expect(res.text).toEqual("Found. Redirecting to http://localhost:4000/");
+      expect(res.text).toEqual(
+        `Found. Redirecting to http://${process.env.DOMAIN}:${process.env.PORT}/`
+      );
     }); // test: user activates email-link
 
     test("should fail when user attempts to use email-link second time", async () => {
