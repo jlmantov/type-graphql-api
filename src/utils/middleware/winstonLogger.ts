@@ -31,6 +31,7 @@ const level = () => {
 };
 
 winston.addColors({
+  critical: "red",
   error: "red",
   warn: "yellow",
   info: "green",
