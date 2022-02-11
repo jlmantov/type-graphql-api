@@ -10,9 +10,14 @@ import { verifyPasswordReset } from "../../utils/verifyPasswordReset";
  * @param _req
  * @param res
  */
-export const users_get = async (_req: Request, res: Response) => {
+export const users_get = async (req: Request, res: Response) => {
   const userRepo = getConnection().getRepository("User") as Repository<User>;
-  const users = await userRepo.find();
+  let users;
+  if (!!req.params.id) {
+    users = await userRepo.findOne(req.params.id);
+  } else {
+    users = await userRepo.find();
+  }
   res.status(200).json({ users: users });
 };
 

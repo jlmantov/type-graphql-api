@@ -53,6 +53,7 @@ router.get("/" + CONFIRMUSER + "/:id", user_confirmEmail_get);
 /**
  * GET "/user/" - requires JWT accessToken
  */
+router.get("/:id", isAuth, users_get);
 router.get("/", isAuth, users_get);
 
 export default router;
