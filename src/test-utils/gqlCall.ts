@@ -1,7 +1,6 @@
 import { graphql, GraphQLSchema } from "graphql";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { createSchema } from "../graphql/utils/createSchema";
-// import logger from "../utils/middleware/winstonLogger";
 
 interface Options {
   source: string;
@@ -11,7 +10,7 @@ interface Options {
   userId?: number;
   contextValue?: {
     req: any;
-    res: {};
+    res: any;
   };
 }
 
@@ -33,9 +32,22 @@ let schema: GraphQLSchema;
  *
  * This way, the schema is called directly - so I don't need to set up a test server
  */
-export const gqlCall = async ({ source, variableValues, userId }: Options) => {
+export const gqlCall = async ({ source, variableValues, userId, contextValue }: Options) => {
   if (!schema) {
     schema = await createSchema(); // created first time, reused ever after
+  }
+
+  // context can be specified in test cases and passed to graphql - response cookies need mock functions in order to succeed
+  let context = {
+    req: {
+      session: {
+        userId,
+      },
+    },
+    res: {},
+  };
+  if (!!contextValue) {
+    context = contextValue;
   }
 
   // https://www.npmjs.com/package/graphql
@@ -44,15 +56,9 @@ export const gqlCall = async ({ source, variableValues, userId }: Options) => {
     schema,
     source,
     variableValues,
-    contextValue: {
-      req: {
-        session: {
-          userId,
-        },
-      },
-      res: {},
-    },
+    contextValue: context,
   });
+
   // logger.debug("gqlCall response: ", response);
   return response; // ExecutionResult contains either error OR data
 };
