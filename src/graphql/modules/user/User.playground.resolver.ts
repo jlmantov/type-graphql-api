@@ -48,7 +48,6 @@ export class UserResolver {
     try {
       validated = await verifyPwd(password, user.password);
     } catch (error) {
-      console.error(error);
       throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "gql/getUser" }); // anonymous error, user might be looking for a vulnerabilities
     }
     if (!validated) {
