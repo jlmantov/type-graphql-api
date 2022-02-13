@@ -29,16 +29,16 @@ export class LoginResolver {
     const user = (await userRepo.findOne({ where: { email } })) as User;
 
     if (!user) {
-      throw new HttpError(400, "BadRequestError", "Invalid email or password");
+      throw new HttpError(400, "BadRequestError", "Invalid email or password", {label: "gql/login" });
     }
 
     const validated = await verifyPwd(password, user.password);
     if (!validated) {
-      throw new HttpError(400, "BadRequestError", "Invalid email or password");
+      throw new HttpError(400, "BadRequestError", "Invalid email or password", {label: "gql/login" });
     }
 
     if (!user.confirmed) {
-      throw new HttpError(400, "BadRequestError", "Email needs to be confirmed in order to enable login");
+      throw new HttpError(400, "BadRequestError", "Email needs to be confirmed in order to enable login", {label: "gql/login" });
     }
 
     // login successful, no create 1. refresh token and 2. access token

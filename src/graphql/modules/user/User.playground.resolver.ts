@@ -40,7 +40,7 @@ export class UserResolver {
       where: { email },
     });
     if (!user) {
-      throw new HttpError(204, "RequestError", "No Content");
+      throw new HttpError(204, "RequestError", "No Content", { label: "gql/getUser" });
     }
 
     // const validated = await verifyPwd(password, user.password);
@@ -49,10 +49,10 @@ export class UserResolver {
       validated = await verifyPwd(password, user.password);
     } catch (error) {
       console.error(error);
-      throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
+      throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "gql/getUser" }); // anonymous error, user might be looking for a vulnerabilities
     }
     if (!validated) {
-      throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
+      throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "gql/getUser" }); // anonymous error, user might be looking for a vulnerabilities
     }
 
     // notice, that even though user contains both salt and password, those fields are kept private

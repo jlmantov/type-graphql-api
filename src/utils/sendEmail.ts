@@ -160,7 +160,7 @@ const createEmailUrl = async (email: string, reason: string) => {
   const result = await emailRepo.create({ email, reason, uuid }).save();
   if (result?.email !== email || result?.reason !== reason || result?.uuid !== uuid) {
     logger.error("emailRepo.create ERROR - result:", result);
-    throw new HttpError(500, "InternalServerError", "Creating new email failed");
+    throw new HttpError(500, "InternalServerError", "Creating new email failed", { label: "createEmailUrl" });
   }
 
   return `http://${process.env.DOMAIN}:${process.env.PORT}/user/${reason}/${uuid}`;

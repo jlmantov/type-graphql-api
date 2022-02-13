@@ -4,12 +4,18 @@ class HttpError extends Error {
   status: number;
   name: string;
   message: string;
-  constructor(status: number, name: string, message: string, error?: Error) {
+  constructor(status: number, name: string, message: string, error?: any) {
     super(message);
     this.status = status;
     this.name = name;
     this.message = message;
-    logger.error(message, { label: "HttpError", status, name, error }); // 2. param is logged as metada: { label: "HttpError", status, name, message }
+    const metadata: { label: string; status: number; name: string; error?: any } = {
+      label: "HttpError",
+      status,
+      name,
+      error,
+    };
+    logger.error(message, metadata); // 2. param is logged as metadata: { label: "HttpError", status, name, message, error }
     switch (status) {
       case 400:
         this.name = "BadRequestError";

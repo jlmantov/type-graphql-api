@@ -24,7 +24,7 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
   if (!authorization) {
     //   if the user didn't add the 'authorization' header, we know they're not authenticated
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
-    throw new HttpError(401, "AuthorizationError", "Not authenticated"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(401, "AuthorizationError", "Not authenticated", { label: "isAuthGql" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   try {
@@ -42,7 +42,7 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       if (error instanceof HttpError) {
         throw error; // error alread handled
       } else {
-        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", { label: "isAuthGql", error });
       }
     }
 
@@ -50,11 +50,11 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
     const user = await userRepo.findOne(context.user.id);
     if (!user) {
       // did network, DB or something else fail? - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
-      throw new HttpError(500, "InternalServerError", "User validation failed");
+      throw new HttpError(500, "InternalServerError", "User validation failed", { label: "isAuthGql" });
     }
     if (user.tokenVersion !== context.user.tokenVersion) {
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", { label: "isAuthGql" });
     }
   } catch (error) {
     // logger.debug("isAuth: " + error.name + " - " + error.message);
@@ -65,12 +65,12 @@ export const isAuthGql: MiddlewareFn<GraphqlContext> = async ({ context }, next)
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(400, "BadRequestError", "Expired or invalid input", error);
+        throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "isAuthGql", error });
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
-        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", { label: "isAuthGql", error });
       default:
-        throw new HttpError(500, "InternalServerError", "Something went wrong", error);
+        throw new HttpError(500, "InternalServerError", "Something went wrong", { label: "isAuthGql", error });
     }
   }
 

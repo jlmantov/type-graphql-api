@@ -22,15 +22,15 @@ import HttpError from "./httpError";
 export const verifyPasswordReset = async (req: Request, _res: Response) => {
   if (!req.params.id) {
     // url param missing
-    throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
   if (!req.body.pwd) {
     // Password missing
-    throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
   if (!req.cookies.roj) {
     // cookie missing
-    throw new HttpError(400, "BadRequestError", "Request input not valid"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Request input not valid", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   //   validate uuid
@@ -39,7 +39,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   validUUID = uuidValidate(uuid);
   if (!validUUID) {
     // Invalid uuid!
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   //   validate token
@@ -59,12 +59,12 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     if (error instanceof HttpError) {
       throw error; // error already handled
     } else {
-      throw new HttpError(400, "BadRequestError", "Expired or invalid input", error); // anonymous error, user might be looking for a vulnerabilities
+      throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset", error }); // anonymous error, user might be looking for a vulnerabilities
     }
   }
 
   if (!reqUsr.id || reqUsr.tokenVersion < 0) {
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   const emailRepo = getConnection().getRepository("UserEmail") as Repository<UserEmail>;
@@ -73,7 +73,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   });
   if (!userEmail) {
     // userEmail not found
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -81,7 +81,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
   // logger.debug("userEmail: " + userEmail + ", now: " + now + ", Int createdAt: " + createdAt); // 5m = 5*60s = 300s <=> exp = iat + 300
   if (payload.exp < now) {
     // Token expired!
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
   const pwd = req.body.pwd;
@@ -98,10 +98,10 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
     },
   });
   if (!(user instanceof User)) {
-    throw new HttpError(400, "BadRequestError", "Expired or invalid input"); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
-  const updRes = await userRepo.update(user.id, { password: hashedPwd });
+  const updRes = await userRepo.update(user!.id, { password: hashedPwd });
   if (updRes.affected === 1) {
     // logger.debug("Password updated on user: ", JSON.stringify(user)); // 5m = 5*60s = 300s <=> exp = iat + 300
     await emailRepo.delete(userEmail.id); // only cleanup if password was actually enabled

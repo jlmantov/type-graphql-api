@@ -15,7 +15,7 @@ export class ResetPasswordResolver {
     const userRepo = getConnection().getRepository("User") as Repository<User>;
     const registeredUser = await userRepo.findOne({ where: { email } });
     if (!registeredUser) {
-      throw new HttpError(400, "BadRequestError", "User validation failed");
+      throw new HttpError(400, "BadRequestError", "User validation failed", { label: "gql/resetPassword" });
     }
 
     // make user confirm email before login is enabled

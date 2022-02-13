@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import jwt, { JsonWebTokenError, SignOptions, verify } from "jsonwebtoken";
+import jwt, { SignOptions, verify } from "jsonwebtoken";
 import { getConnection, Repository } from "typeorm";
 import { GraphqlContext } from "../graphql/utils/GraphqlContext";
 import { User } from "../orm/entity/User";
@@ -99,7 +99,7 @@ export const renew_accesstoken_post = async (req: Request, res: Response) => {
     // 1. npm start, 2. POST req w. cookie from Postman, 3. conlose.log verified content. Great, let's move on.
     const token = req.cookies.jid;
     if (!token) {
-      throw new HttpError(400, "BadRequestError", "Access denied");
+      throw new HttpError(400, "BadRequestError", "Access denied", { label: "renew_accesstoken_post" });
     }
 
     let payload: JwtRefreshPayload | null = null;
@@ -109,7 +109,7 @@ export const renew_accesstoken_post = async (req: Request, res: Response) => {
       reqUsr.id = parseInt(payload!.kew, 10);
       reqUsr.tokenVersion = payload.tas;
     } catch (error) {
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", {label: "renew_accesstoken_post", error});
     }
 
     //  token is valid and we can return an accessToken
@@ -117,13 +117,13 @@ export const renew_accesstoken_post = async (req: Request, res: Response) => {
     const user = await userRepo.findOne({ id: reqUsr.id });
     if (!user) {
       // this should not really happen since userId comes from refreshToken - but then again... DB is down or whatever
-      throw new HttpError(400, "BadRequestError", "Unable to validate user");
+      throw new HttpError(400, "BadRequestError", "Unable to validate user", { label: "renew_accesstoken_post" });
     }
 
     if (user.tokenVersion !== reqUsr.tokenVersion) {
       // If user forgets/change password or decides to invalidate existing sessions, this is how it is done:
       // By incrementing tokenVersion, all existing sessions bound to a 'previous' version are now invalid
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
+      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", { label: "renew_accesstoken_post" });
     }
 
     // update refreshToken as well
@@ -138,7 +138,7 @@ export const renew_accesstoken_post = async (req: Request, res: Response) => {
     if (error instanceof HttpError) {
       httpErr = error as HttpError; // declared above
     } else {
-      httpErr = new HttpError(401, "AuthorizationError", "Expired or invalid input", error); // something caused by 'verify(...)'
+      httpErr = new HttpError(401, "AuthorizationError", "Expired or invalid input", {label: "renew_accesstoken_post", error}); // something caused by 'verify(...)'
     }
     res.status(httpErr.status).send({ name: httpErr.name, message: httpErr.message });
   }
@@ -153,7 +153,7 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
     const jwtPayload: any = verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!);
     if (!(jwtPayload.bit || jwtPayload.plf)) {
       throw new HttpError( // one must be available (not both)
-        401, "AuthorizationError", "Expired or invalid input", new JsonWebTokenError(JSON.stringify(jwtPayload))
+        401, "AuthorizationError", "Invalid payload", { label: "getJwtPayload", jwtPayload: jwtPayload }
       );
     }
     return jwtPayload;
@@ -162,9 +162,9 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
       throw error; // declared above
     } else {
       if (error.message.toLowerCase().indexOf("invalid") > -1) {
-        throw new HttpError(401, "AuthorizationError", "Expired or invalid input", error); // something caused by 'verify(...)'
+        throw new HttpError(401, "AuthorizationError", error.message, { label: "getJwtPayload", error }); // something caused by 'verify(...)'
       }
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+      throw new HttpError(403, "AuthorizationError", error.message, { label: "getJwtPayload", error });
     }
   }
 };

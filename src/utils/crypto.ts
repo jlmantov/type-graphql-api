@@ -42,7 +42,7 @@ export const hash = async (pwd: string): Promise<string> => {
 
     return respValues[4] + "$" + respValues[5]; // base64 encoded salt + base64 encoded passwordhash
   } catch (error) {
-    throw new HttpError(500, "EncryptionError", "Password encryption failed", error); // anonymous error, user might be looking for a vulnerabilities
+    throw new HttpError(500, "EncryptionError", "Password encryption failed", { label: "hash", error }); // anonymous error, user might be looking for a vulnerabilities
   }
 };
 
@@ -61,7 +61,7 @@ export const verifyPwd = async (pwd: string, hashedPwd: string): Promise<boolean
       return false; // password did not match
     }
   } catch (error) {
-      throw new HttpError(400, "BadRequestError", "Invalid password", error); // anonymous error, user might be looking for a vulnerabilities
+      throw new HttpError(400, "BadRequestError", "Invalid password", { label: "verifyPwd", error }); // anonymous error, user might be looking for a vulnerabilities
   }
 };
 

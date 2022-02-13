@@ -21,7 +21,7 @@ export class RegisterResolver {
     const userRepo = getConnection().getRepository("User") as Repository<User>;
     const registeredUser = await userRepo.findOne({ where: { email } });
     if (registeredUser) {
-      throw new HttpError(400, "BadRequestError", "User already exist"); // avoid duplicates
+      throw new HttpError(400, "BadRequestError", "User already exist", { label: "gql/register" }); // avoid duplicates
     }
 
     try {
@@ -37,7 +37,7 @@ export class RegisterResolver {
         .save();
 
       if (!user) {
-        throw new HttpError(500, "InternalServerError", "Unable to create user"); // some unhandled error - net, connection, DB, disc whatever ...
+        throw new HttpError(500, "InternalServerError", "Unable to create user", { label: "gql/register" }); // some unhandled error - net, connection, DB, disc whatever ...
       }
 
       // make user confirm email before login is enabled
@@ -47,7 +47,7 @@ export class RegisterResolver {
       if (error instanceof HttpError) {
         throw error; // error already handled
       }
-      throw new HttpError(500, "InternalServerError", error.message, error); // some unhandled error - net, connection, DB, disc whatever ...
+      throw new HttpError(500, "InternalServerError", error.message, { label: "gql/register", error }); // some unhandled error - net, connection, DB, disc whatever ...
     }
   }
 }

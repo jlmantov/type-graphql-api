@@ -10,6 +10,7 @@ module.exports = {
     // For now, migration tests are considered too expensive - or the value is too low at current project state, so
     // migrations are ignored with regard to coverage
     "/src/orm/migration/", // https://jestjs.io/docs/configuration#coveragepathignorepatterns-arraystring
+    "/dist/orm/migration/", // https://jestjs.io/docs/configuration#coveragepathignorepatterns-arraystring
     "User.playground.resolver.ts", // this would never go into production anyway
   ],
   testPathIgnorePatterns: [
@@ -18,6 +19,7 @@ module.exports = {
     // "testConn.test.[jt]s",
     // "gqlCall.test.[jt]s",
     // "auth.test.[jt]s",
+    // "isAuth.test.[jt]s",
     // "resetPasswordForm.test.[jt]s",
     // "verifyPasswordReset.test.[jt]s",
     // "error.test.[jt]s",
