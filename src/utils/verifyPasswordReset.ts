@@ -97,7 +97,7 @@ export const verifyPasswordReset = async (req: Request, _res: Response) => {
       confirmed: true,
     },
   });
-  if (!(user instanceof User)) {
+  if (!!user && user.email !== userEmail.email) {
     throw new HttpError(400, "BadRequestError", "Expired or invalid input", { label: "verifyPasswordReset" }); // anonymous error, user might be looking for a vulnerabilities
   }
 
