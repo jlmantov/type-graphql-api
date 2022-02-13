@@ -46,6 +46,12 @@ describe("auth", () => {
     dbuser = await userRepo.findOne();
   });
 
+  afterAll(async () => {
+    if (conn && conn.isConnected) {
+      await testConn.close();
+    }
+  });
+
   describe("Create and validate token", () => {
     describe("revokeRefreshToken", () => {
       let tstReq: any;

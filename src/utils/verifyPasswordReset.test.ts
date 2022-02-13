@@ -65,6 +65,12 @@ describe("verifyPasswordReset", () => {
     await emailRepo.delete({ email: fakeUser.email });
   });
 
+  afterAll(async () => {
+    if (conn && conn.isConnected) {
+      await testConn.close();
+    }
+  });
+
   beforeEach(async () => {
     dbUserEmail = undefined; // init/reset
     resetPwdFormUrl = "";
@@ -79,9 +85,7 @@ describe("verifyPasswordReset", () => {
       source: "mutation ResetPassword($email: String!) { resetPassword(email: $email) }",
       variableValues: { email: fakeUser.email },
     });
-    logger.silly(" -- beforeEach -->  reset.data.resetPassword:", {
-      resetPassword: reset.data?.resetPassword,
-    });
+    logger.silly(" -- beforeEach -->  reset.data.resetPassword:", { resetPassword: reset.data?.resetPassword });
 
     dbuser = await userRepo.findOne(fakeUser.id);
     logger.silly(" -- beforeEach -->  dbuser:", dbuser);
@@ -124,11 +128,11 @@ describe("verifyPasswordReset", () => {
     strResetPwdCookie = res.header["set-cookie"][0];
     logger.silly(" -- beforeEach - strCookie: " + JSON.stringify(strResetPwdCookie.split("; ")));
     // "set-cookie": ["roj=eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJwbGYiOjIxLCJybmwiOjEsImlhdCI6MTY0NDQzNDQ3NCwiZXhwIjoxNjQ0NDM0Nzc0fQ.Sbn6DvByeFW1i0jgf-QYOxb-vwJjquyRtYwQ_pM0FRo52gnJ6VcbliShXkTuECjI; Path=/; HttpOnly; SameSite=Strict"]
-    logger.silly(" -- beforeEach - name: " + strResetPwdCookie.split("; ")[0].split("=")[0]);
-    logger.silly(" -- beforeEach - value: " + strResetPwdCookie.split("; ")[0].split("=")[1]);
-    logger.silly(" -- beforeEach - path: " + strResetPwdCookie.split("; ")[1].split("=")[1]);
-    logger.silly(" -- beforeEach - httpOnly: " + strResetPwdCookie.split("; ")[2]);
-    logger.silly(" -- beforeEach - sameSite: " + strResetPwdCookie.split("; ")[3].split("=")[1]);
+    // logger.silly(" -- beforeEach - name: " + strResetPwdCookie.split("; ")[0].split("=")[0]);
+    // logger.silly(" -- beforeEach - value: " + strResetPwdCookie.split("; ")[0].split("=")[1]);
+    // logger.silly(" -- beforeEach - path: " + strResetPwdCookie.split("; ")[1].split("=")[1]);
+    // logger.silly(" -- beforeEach - httpOnly: " + strResetPwdCookie.split("; ")[2]);
+    // logger.silly(" -- beforeEach - sameSite: " + strResetPwdCookie.split("; ")[3].split("=")[1]);
     resetPasswordCookie = {
       name: strResetPwdCookie.split("; ")[0].split("=")[0],
       value: strResetPwdCookie.split("; ")[0].split("=")[1],
@@ -136,9 +140,7 @@ describe("verifyPasswordReset", () => {
       httpOnly: strResetPwdCookie.split("; ")[2],
       sameSite: strResetPwdCookie.split("; ")[3].split("=")[1],
     };
-    logger.silly(" -- beforeEach - resetPasswordCookie: ", {
-      resetPasswordCookie: resetPasswordCookie,
-    });
+    logger.silly(" -- beforeEach - resetPasswordCookie: ", { resetPasswordCookie });
     expect(resetPasswordCookie.name).toEqual("roj");
     expect(resetPasswordCookie.path).toEqual("/");
     expect(resetPasswordCookie.httpOnly).toEqual("HttpOnly");
@@ -149,8 +151,11 @@ describe("verifyPasswordReset", () => {
   // POST '/user/resetpwd/<Id>' - verifyPassword_post --> verifyPasswordReset(req, res)
   //
   describe("verifyPasswordReset", () => {
-    test("Success ", async () => {
-      // String("/user/resetpwd/").length = 16 + uuid: char(36);
+    test("302 Success ", async () => {
+      logger.debug(" -- 302 Success --> POST /user/resetpwd/" + dbUserEmail?.uuid);
+      logger.silly(" -- 302 Success --> dbuser", dbuser);
+      logger.silly(" -- 302 Success --> dbUserEmail", dbUserEmail);
+      logger.silly(" -- 302 Success --> resetPwdFormUrl: " + resetPwdFormUrl); // '/user/resetpwd/' + uuid
       expect(resetPwdFormUrl.length).toBe(String("/user/resetpwd/").length + 36);
 
       // POST '/user/resetpwd/<Id>' - verifyPassword_post --> verifyPasswordReset(req, res)
@@ -159,17 +164,14 @@ describe("verifyPasswordReset", () => {
         .post("/user/resetpwd/" + dbUserEmail?.uuid) // req.params.id
         .set("Cookie", `roj=${resetPasswordCookie.value}`) // req.cookies.roj
         .send({ pwd: "n3xtPw61" }); // req.body.pwd
-      logger.silly(" -- Success --> POST /user/resetpwd/" + dbUserEmail?.uuid);
-      logger.silly(" -- Success --> response: ", { tstResp: tstResp });
+      logger.silly(" -- 302 Success --> response: ", { tstResp: tstResp });
 
       expect(tstResp.status).toBe(302);
-      expect(tstResp.text).toEqual(
-        `Found. Redirecting to http://${process.env.DOMAIN}:${process.env.PORT}/`
-      );
-    }); // Success
+      expect(tstResp.text).toEqual(`Found. Redirecting to http://${process.env.DOMAIN}:${process.env.PORT}/`);
+    }); // 302 Success
 
-    test("Failure - uuid letter changed", async () => {
-      // String("/user/resetpwd/").length = 16 + uuid: char(36);
+    test("400 uuid altered", async () => {
+      logger.debug(" -- 400 uuid altered --> POST /user/resetpwd/" + dbUserEmail?.uuid);
       expect(resetPwdFormUrl.length).toBe(String("/user/resetpwd/").length + 36);
 
       let fakeUuid = dbUserEmail?.uuid; // e.g.: bc0f2317-a068-436c-aa5c-61c52f21e9c9
@@ -178,8 +180,8 @@ describe("verifyPasswordReset", () => {
       } else {
         fakeUuid = `${dbUserEmail?.uuid.slice(0, 35)}a`;
       }
-      logger.silly(" -- Failure, uuid altered --> UUID: " + dbUserEmail?.uuid);
-      logger.silly(" -- Failure, uuid altered --> fake: " + fakeUuid);
+      logger.silly(" -- 400 uuid altered --> UUID: " + dbUserEmail?.uuid);
+      logger.silly(" -- 400 uuid altered --> fake: " + fakeUuid);
 
       // POST '/user/resetpwd/<Id>' - verifyPassword_post --> verifyPasswordReset(req, res)
       tstReq = await request(app);
@@ -187,20 +189,20 @@ describe("verifyPasswordReset", () => {
         .post("/user/resetpwd/" + fakeUuid) // req.params.id
         .set("Cookie", `roj=${resetPasswordCookie.value}`) // req.cookies.roj
         .send({ pwd: "n3xtPw62" }); // req.body.pwd
-      logger.silly(" -- Failure, uuid altered --> POST /user/resetpwd/" + dbUserEmail?.uuid);
-      logger.silly(" -- Failure, uuid altered --> response: ", { tstResp: tstResp });
+      logger.silly(" -- 400 uuid altered --> response: ", { tstResp: tstResp });
 
       expect(tstResp.status).toBe(400);
       expect(tstResp.text).toEqual("BadRequestError: Expired or invalid input");
-    }); // Failure - uuid letter changed
+    }); // 400 uuid altered
 
-    test("Failure - uuid replaced with another genuine uuid", async () => {
+    test("400 uuid replaced with another genuine uuid", async () => {
+      logger.debug(" -- 400 uuid replaced --> POST /user/resetpwd/" + dbUserEmail?.uuid);
       // String("/user/resetpwd/").length = 16 + uuid: char(36);
       expect(resetPwdFormUrl.length).toBe(String("/user/resetpwd/").length + 36);
 
       let fakeUuid = await uuidv4(); // e.g.: bc0f2317-a068-436c-aa5c-61c52f21e9c9
-      logger.silly(" -- Failure, uuid replaced --> UUID: " + dbUserEmail?.uuid);
-      logger.silly(" -- Failure, uuid replaced --> fake: " + fakeUuid);
+      logger.silly(" -- 400 uuid replaced --> UUID: " + dbUserEmail?.uuid);
+      logger.silly(" -- 400 uuid replaced --> fake: " + fakeUuid);
 
       // POST '/user/resetpwd/<Id>' - verifyPassword_post --> verifyPasswordReset(req, res)
       tstReq = await request(app);
@@ -208,16 +210,16 @@ describe("verifyPasswordReset", () => {
         .post("/user/resetpwd/" + fakeUuid) // req.params.id
         .set("Cookie", `roj=${resetPasswordCookie.value}`) // req.cookies.roj
         .send({ pwd: "n3xtPw63" }); // req.body.pwd
-      logger.silly(" -- Failure, uuid replaced --> POST /user/resetpwd/" + dbUserEmail?.uuid);
-      logger.silly(" -- Failure, uuid replaced --> response: ", { tstResp: tstResp });
+      logger.silly(" -- 400 uuid replaced --> response: ", { tstResp: tstResp });
 
       expect(tstResp.status).toBe(400);
       expect(tstResp.text).toEqual("BadRequestError: Expired or invalid input");
-    }); // Failure - uuid replaced with another genuine uuid
+    }); // 400 uuid replaced with another genuine uuid
 
-    test("Failure - modified cookie payload", async () => {
+    test("400 modified cookie payload", async () => {
+      logger.debug(" -- 400 modified cookie payload --> POST /user/resetpwd/" + dbUserEmail?.uuid);
       // { plf: user.id, rnl: user.tokenVersion }; // resetToken payload
-      logger.silly(" -- 401 resettoken payload = { id: 999, tokenVersion: 1 }");
+      logger.silly(" -- 400 modified cookie payload = { id: 999, tokenVersion: 1 }");
       const resetPayload = { id: 999, tokenVersion: 1 };
       const resetOptions: SignOptions = {
         header: { alg: "HS384", typ: "JWT" },
@@ -232,12 +234,10 @@ describe("verifyPasswordReset", () => {
         .post("/user/resetpwd/" + dbUserEmail?.uuid) // req.params.id
         .set("Cookie", `roj=${resetToken}`) // req.cookies.roj
         .send({ pwd: "n3xtPw63" }); // req.body.pwd
-      logger.silly(" -- Failure, uuid replaced --> POST /user/resetpwd/" + dbUserEmail?.uuid);
-      logger.silly(" -- Failure, uuid replaced --> response: ", { tstResp: tstResp });
+      logger.silly(" -- 400 modified cookie payload --> response: ", { tstResp: tstResp });
 
       expect(tstResp.status).toBe(400);
       expect(tstResp.text).toEqual("AuthorizationError: Expired or invalid input");
-    }); // Failure - modified cookie payload
-
+    }); // 400 modified cookie payload
   }); // verifyPasswordReset
 });
