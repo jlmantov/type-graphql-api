@@ -12,59 +12,62 @@ import logger from "./winstonLogger";
  * @param next
  */
 export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
-  const authorization = req.headers["authorization"];
+  const authorization = req.headers["authorization"]; // missing 'authorization' header <=> not authenticated
 
   try {
-    if (!authorization) {
-      // if the user didn't add the 'authorization' header, we know they're not authenticated
-      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
-      throw new HttpError(401, "AuthorizationError", "Expired or invalid input", new Error("No authorization header")); // anonymous error, user might be looking for a vulnerabilities
+    if (authorization === undefined || authorization === "") {
+      throw new HttpError(401, "AuthorizationError", "Expired or invalid input", { isAuth: "No authorization header" }); // anonymous error, user might be looking for a vulnerabilities
     }
-    const token = authorization.split(" ")[1];
+    const token = authorization!.split(" ")[1];
+    logger.debug(" -- isAuth --> authorization header OK => getJwtPayload");
 
-    let payload: JwtAccessPayload | undefined = undefined;
-    // accessPayload = { bit: user.id, ogj: user.tokenVersion };
+    let payload: JwtAccessPayload | undefined = undefined; // accessPayload = { bit: user.id, ogj: user.tokenVersion };
     payload = getJwtPayload(token) as JwtAccessPayload; // verified attribute userId
+    logger.debug(` -- isAuth --> getJwtPayload`, payload);
     const reqUsr = {
       id: parseInt(payload.bit, 10),
       tokenVersion: payload.ogj,
     };
+    logger.debug(` -- isAuth --> reqUsr`, reqUsr);
 
-    if (!reqUsr.id || reqUsr.tokenVersion < 0) {
-      logger.error("Invalid token payload: ", payload); // log token verification error
-      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
-      throw new HttpError(403, "AuthorizationError", "Access expired, please login again"); // anonymous error, user might be looking for a vulnerabilities
+    if (reqUsr.id === 0 || reqUsr.tokenVersion === undefined) {
+      throw new HttpError(401, "AuthorizationError", "Expired or invalid input", { isAuth: "jwt payload invalid" }); // anonymous error, user might be looking for a vulnerabilities
     }
 
     const userRepo = getConnection().getRepository("User") as Repository<User>;
     userRepo.findOne(reqUsr.id).then((usr) => {
       if (usr) {
+        logger.debug(` -- isAuth --> DB lookup, User.id ${reqUsr.id}`, usr);
         if (usr.tokenVersion !== reqUsr!.tokenVersion) {
-          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
-          throw new HttpError(403, "AuthorizationError", "Access expired, please login again");
+          const err = new HttpError(403, "AuthorizationError", "Access expired, please login again", { isAuth: "wrong tokenVersion" });
+          next(err);
         }
       } else {
-        // did network, DB or something else fail? - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
-        throw new HttpError(500, "InternalServerError", "User validation failed");
+        const err = new HttpError(500, "InternalServerError", "User validation failed", { isAuth: `User.id ${reqUsr.id} not found` });
+        next(err);
       }
+      next(); // success
+    }).catch((error) => {
+      const err = new HttpError(500, "InternalServerError", `User validation ERROR, User.id ${reqUsr.id}`, {label: "isAuth", error});
+      next(err);
     });
-  } catch (error) {
-    if (error instanceof HttpError) {
-      throw error; // error already handled
-    }
 
+  } catch (error) {
+    // logger.debug(` -- isAuth --> ERROR${error.status !== undefined ? ", HttpError " + error.status : ""}:`, error);
     switch (error.name) {
+      case "AuthorizationError":
+      case "InternalServerError":
+        // logger.debug(" -- isAuth --> ERROR",{ label: "isAuth", error });
+        throw error; // error already HttpError (logged)
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(400, "BadRequestError", "Expired or invalid input", error);
+        throw new HttpError(401, "AuthorizationError", "Expired or invalid input", {label: "isAuth.catch", error});
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
-        // throw new HttpException(403, error.name, error.message);
-        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", error);
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", {label: "isAuth.catch", error});
       default:
-        throw new HttpError(500, "InternalServerError", "Something went wrong", error);
+        throw new HttpError(500, "InternalServerError", "Something went wrong", {label: "isAuth.catch", error});
     }
   }
-  next();
 };
