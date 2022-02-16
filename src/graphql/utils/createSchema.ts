@@ -1,4 +1,5 @@
 import { buildSchema } from "type-graphql";
+import { IsAliveResolver } from "../modules/IsAlive.resolver";
 import { LoginResolver } from "../modules/user/Login.resolver";
 import { RegisterResolver } from "../modules/user/Register.resolver";
 import { ResetPasswordResolver } from "../modules/user/ResetPassword.resolver";
@@ -11,5 +12,11 @@ import { UserResolver } from "../modules/user/User.playground.resolver";
  */
 export const createSchema = () =>
   buildSchema({
-    resolvers: [UserResolver, LoginResolver, RegisterResolver, ResetPasswordResolver],
+    resolvers: [
+      IsAliveResolver,
+      LoginResolver,
+      RegisterResolver,
+      ResetPasswordResolver,
+      UserResolver,
+    ],
   });
