@@ -18,6 +18,7 @@ module.exports = {
     "/node_modules/",
     // "testConn.test.[jt]s",
     // "gqlCall.test.[jt]s",
+    // "gqlAuth.test.[jt]s",
     // "auth.test.[jt]s",
     // "isAuth.test.[jt]s",
     // "resetPasswordForm.test.[jt]s",
@@ -27,6 +28,7 @@ module.exports = {
     // "user.test.[jt]s",
     // "Register.test.[jt]s",
     // "Login.test.[jt]s",
+    // "IsAlive.test.[jt]s",
   ], // file path patterns - skip any test matching these regexp patterns
   watchPathIgnorePatterns: [
     "/dist/", // https://jestjs.io/docs/configuration#watchpathignorepatterns-arraystring

@@ -14,7 +14,7 @@ import logger from "./utils/middleware/winstonLogger";
   const envfile = __dirname + "/../.env." + (process.env.NODE_ENV?.trim() || "development");
   const envConf = dotenv.config({ path: envfile });
   if (envConf?.parsed?.DOMAIN === "localhost") {
-    logger.debug("Configuration environment: "+ envConf?.parsed?.NODE_ENV);
+    logger.debug("Configuration environment: " + envConf?.parsed?.NODE_ENV);
   }
 
   await createConnection(); // create database connection
@@ -25,6 +25,7 @@ import logger from "./utils/middleware/winstonLogger";
     schema: await createSchema(),
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
     context: ({ req, res }) => ({ req, res }),
+    debug: false, // graphql stacktrace: https://www.apollographql.com/docs/apollo-server/data/errors/#omitting-or-including-stacktrace
   });
 
   // body-parser included: https://www.apollographql.com/docs/apollo-server/v2/migration-two-dot/#simplified-usage
@@ -41,4 +42,3 @@ import logger from "./utils/middleware/winstonLogger";
     logger.info(`Express server started at port ${port}`);
   });
 })();
-
