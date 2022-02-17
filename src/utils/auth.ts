@@ -162,6 +162,7 @@ export const getJwtPayload = (token: string): JwtAccessPayload | JwtResetPayload
       throw error; // declared above
     } else {
       if (error.message.toLowerCase().indexOf("invalid") > -1) {
+        // e.g.: JsonWebTokenError - invalid signature
         throw new HttpError(401, "AuthorizationError", error.message, { label: "getJwtPayload", error }); // something caused by 'verify(...)'
       }
       throw new HttpError(403, "AuthorizationError", error.message, { label: "getJwtPayload", error });

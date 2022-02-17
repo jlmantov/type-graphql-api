@@ -43,7 +43,7 @@ describe("auth", () => {
       source: registerMutation,
       variableValues: fakeUser,
     });
-    dbuser = await userRepo.findOne();
+    dbuser = await userRepo.findOne({ where: { email: fakeUser.email } });
   });
 
   afterAll(async () => {
@@ -200,8 +200,18 @@ describe("auth", () => {
 
     test("should fail with 403 on 'access expired'", async () => {
       let payload;
-      const expiredAccessToken =
-        "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJiaXQiOjgsIm9naiI6MCwiaWF0IjoxNjQzOTYxMDQyLCJleHAiOjE2NDM5NjE5NDJ9.Uje4PHcr7dDXEWgoUHSLVOslmSyLhXAIGEVhEF_ydQqj_Oy5XjmROJQrnw_Gsmqe";
+
+      const accessPayload = { bit: dbuser?.id, ogj: Number(dbuser?.tokenVersion) };
+      const expiredAccessOptions: SignOptions = {
+        header: { alg: "HS384", typ: "JWT" },
+        expiresIn: "-1h",
+        algorithm: "HS384",
+      };
+      const expiredAccessToken = await jwt.sign(
+        accessPayload,
+        process.env.JWT_ACCESS_TOKEN_SECRET!,
+        expiredAccessOptions
+      );
 
       try {
         payload = getJwtPayload(expiredAccessToken);

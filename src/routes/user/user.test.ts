@@ -1,4 +1,5 @@
 import faker from "faker";
+import jwt, { SignOptions } from "jsonwebtoken";
 import request from "supertest";
 import { Connection, Repository } from "typeorm";
 import { CONFIRMUSER } from ".";
@@ -29,7 +30,7 @@ describe("User", () => {
   let conn: Connection;
   let userRepo: Repository<User>;
   let emailRepo: Repository<UserEmail>;
-  let user: User;
+  let dbuser: User;
 
   beforeAll(async () => {
     conn = await testConn.create();
@@ -48,10 +49,10 @@ describe("User", () => {
       variableValues: fakeUser,
     });
     if (!!result.data && result.data.register) {
-      user = result.data.register;
-      await userRepo.increment({ id: user.id }, "confirmed", 1); // allow user to login
-      user.confirmed = false;
-      user.tokenVersion = 0; // used by '/renew_accesstoken'
+      dbuser = result.data.register;
+      await userRepo.increment({ id: dbuser.id }, "confirmed", 1); // allow user to login
+      dbuser.confirmed = false;
+      dbuser.tokenVersion = 0; // used by '/renew_accesstoken'
     }
   });
 
@@ -69,12 +70,21 @@ describe("User", () => {
 
     test("should fail on authentication header with expired accessToken", async () => {
       // expired access token
-      const accessToken =
-        "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJiaXQiOjE3LCJvZ2oiOjQ3LCJpYXQiOjE2NDAxNzkyOTcsImV4cCI6MTY0MDE4MDE5N30.blYGmrKt4XSPL_mScmig31tocV30tLExGbUNrTCTByIm5AP7vtK8if0-dsH1JPln";
+      const accessPayload = { bit: dbuser?.id, ogj: Number(dbuser?.tokenVersion) };
+      const expiredAccessOptions: SignOptions = {
+        header: { alg: "HS384", typ: "JWT" },
+        expiresIn: "-1h",
+        algorithm: "HS384",
+      };
+      const expiredAccessToken = await jwt.sign(
+        accessPayload,
+        process.env.JWT_ACCESS_TOKEN_SECRET!,
+        expiredAccessOptions
+      );
 
       const res = await request(app)
         .get("/user")
-        .set("Authorization", "bearer " + accessToken)
+        .set("Authorization", "bearer " + expiredAccessToken)
         .send(); // no authentication header
 
       expect(res.statusCode).toEqual(403);
@@ -83,8 +93,8 @@ describe("User", () => {
 
     test("should succeed on authentication header with valid accessToken", async () => {
       // 1. create an new refreshToken - use valid userId/tokenVersion
-      expect(user).toBeDefined();
-      const accessToken = await createAccessToken(user);
+      expect(dbuser).toBeDefined();
+      const accessToken = await createAccessToken(dbuser);
 
       const res = await request(app)
         .get("/user")
@@ -125,19 +135,19 @@ describe("User", () => {
 
     beforeAll(async () => {
       userEmail = await emailRepo.findOne({
-        where: { email: user.email },
+        where: { email: dbuser.email },
       });
     });
 
     test("Before user activates email-link, login is disabled", async () => {
-      expect(user).toBeDefined();
+      expect(dbuser).toBeDefined();
       expect(userEmail).toBeDefined();
-      expect(user!.confirmed).toBe(false);
+      expect(dbuser!.confirmed).toBe(false);
     }); // test: login disabled
 
     test("should succeed when user activates email-link", async () => {
-      expect(user).toBeDefined();
-      expect(user!.confirmed).toBe(false);
+      expect(dbuser).toBeDefined();
+      expect(dbuser!.confirmed).toBe(false);
       expect(userEmail).toBeDefined();
 
       const res = await request(app)
@@ -145,14 +155,14 @@ describe("User", () => {
         .send(); // no authentication header
 
       // 4. When user activates email-link, login is enabled
-      const userActive = await userRepo.findOne({ id: user!.id });
+      const userActive = await userRepo.findOne({ id: dbuser!.id });
       expect(userActive).toBeDefined();
       expect(userActive!.confirmed).toBe(true);
 
       // 5. When user activates email-link, email-link is removed
       const userEmailActive = await emailRepo.findOne({
         where: {
-          email: user!.email,
+          email: dbuser!.email,
           reason: CONFIRMUSER,
         },
       });
@@ -166,7 +176,7 @@ describe("User", () => {
     }); // test: user activates email-link
 
     test("should fail when user attempts to use email-link second time", async () => {
-      expect(user).toBeDefined();
+      expect(dbuser).toBeDefined();
       expect(userEmail).toBeDefined();
 
       const res = await request(app)
