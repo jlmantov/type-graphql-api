@@ -19,7 +19,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
       throw new HttpError(401, "AuthorizationError", "Expired or invalid input", { isAuth: "No authorization header" }); // anonymous error, user might be looking for a vulnerabilities
     }
     const token = authorization!.split(" ")[1];
-    logger.debug(" -- isAuth --> authorization header OK => getJwtPayload");
+    logger.debug(" -- isAuth --> authorization header OK => token: " + token);
 
     let payload: JwtAccessPayload | undefined = undefined; // accessPayload = { bit: user.id, ogj: user.tokenVersion };
     payload = getJwtPayload(token) as JwtAccessPayload; // verified attribute userId
@@ -48,7 +48,7 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
       }
       next(); // success
     }).catch((error) => {
-      const err = new HttpError(500, "InternalServerError", `User validation ERROR, User.id ${reqUsr.id}`, {label: "isAuth", error});
+      const err = new HttpError(500, "InternalServerError", `User validation ERROR, User.id ${reqUsr.id}`, {isAuth: "DB lookup failed", error});
       next(err);
     });
 
@@ -57,17 +57,17 @@ export const isAuth = (req: Request, _res: Response, next: NextFunction) => {
     switch (error.name) {
       case "AuthorizationError":
       case "InternalServerError":
-        // logger.debug(" -- isAuth --> ERROR",{ label: "isAuth", error });
+        // logger.debug(" -- isAuth --> ERROR",{ isAuth: "catch", error });
         throw error; // error already HttpError (logged)
       case "JsonWebTokenError":
         // 'isAuth: JsonWebTokenError - <token> malformed!'
         // 'isAuth: JsonWebTokenError - invalid signature!'
-        throw new HttpError(401, "AuthorizationError", "Expired or invalid input", {label: "isAuth.catch", error});
+        throw new HttpError(401, "AuthorizationError", "Expired or invalid input", {isAuth: "catch", error});
       case "TokenExpiredError":
         // 'isAuth: TokenExpiredError - jwt expired!'
-        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", {label: "isAuth.catch", error});
+        throw new HttpError(403, "AuthorizationError", "Access expired, please login again", {isAuth: "catch", error});
       default:
-        throw new HttpError(500, "InternalServerError", "Something went wrong", {label: "isAuth.catch", error});
+        throw new HttpError(500, "InternalServerError", "Something went wrong", {isAuth: "catch", error});
     }
   }
 };
