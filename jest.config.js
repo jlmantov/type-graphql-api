@@ -12,11 +12,12 @@ module.exports = {
     "/src/orm/migration/", // https://jestjs.io/docs/configuration#coveragepathignorepatterns-arraystring
     "/dist/orm/migration/", // https://jestjs.io/docs/configuration#coveragepathignorepatterns-arraystring
     "User.playground.resolver.ts", // this would never go into production anyway
+    "testConn.[jt]s",
   ],
   testPathIgnorePatterns: [
     "/dist/", // https://jestjs.io/docs/configuration#testpathignorepatterns-arraystring
     "/node_modules/",
-    // "testConn.test.[jt]s",
+    "testConn.test.[jt]s",
     // "gqlCall.test.[jt]s",
     // "gqlAuth.test.[jt]s",
     // "auth.test.[jt]s",
