@@ -5,13 +5,7 @@ import logger from "../utils/middleware/winstonLogger";
 import { gqlCall } from "./gqlCall";
 import testConn from "./testConn";
 
-/**
- * the graphql schema is called directly, using the graphql(...) function.
- * graphql takes some input arguments - like a schema, query/mutation
- *
- * GraphQL is going to be called a lot, so the setup around graphql(...) is stored in the helper-function: gqlCall
- */
-
+// This test suite is provided to validate the testing tool. Since it
 describe("testConn test-util", () => {
   let conn: Connection;
 
@@ -31,16 +25,14 @@ describe("testConn test-util", () => {
   });
 
   afterEach(async () => {
+    // 'expect' ends a test case, causing continuation to become unpredictable.
+    // Closing connection needs to be done here
     if (conn && conn.isConnected) {
       // logger.debug("closing DB connection");
       await testConn.close();
     }
-    // logger.debug("isConnected:", !!(conn && conn.isConnected));
   });
 
-  /**
-   *
-   */
   test("testConn.create - success", async () => {
     // logger.debug("before create - conn: ", conn?.driver?.options);
     expect(conn).toBeUndefined();
@@ -59,12 +51,8 @@ describe("testConn test-util", () => {
     });
     const result = await Promise.all(entityPromises);
     expect(result.length).toEqual(entities.length);
-    // await conn.close(); // 'expect' ends the test case, so this line might be unreachable
   });
 
-  /**
-   *
-   */
   test("testConn.close - success", async () => {
     if (conn === undefined || !conn.isConnected) {
       conn = await testConn.create();
@@ -77,9 +65,6 @@ describe("testConn test-util", () => {
     expect(conn.isConnected).toBe(false);
   });
 
-  /**
-   *
-   */
   test("testConn.close on closed connection - failure", async () => {
     if (conn === undefined || !conn.isConnected) {
       conn = await testConn.create();
@@ -99,9 +84,7 @@ describe("testConn test-util", () => {
     }
   });
 
-  /**
-   *
-   */
+  // NB: this test case deletes ALL data from other test cases
   test("testConn.clear - get clear results", async () => {
     conn = await testConn.create();
     let entities = conn.entityMetadatas;
@@ -156,7 +139,5 @@ describe("testConn test-util", () => {
       expect(entity.rowsAfter).toBe(0);
       // logger.debug("Entity cleared succesfully: ", entity.entityName);
     }
-
-    // await conn.close(); // 'expect' ends the test case, so this line might be unreachable
   });
 });
